@@ -1,0 +1,121 @@
+"use client";
+
+import React, { useState } from 'react';
+import { Ticket, MessageCircle, User } from 'lucide-react';
+import TicketList from '@/components/tickets/ticket-list';
+import TicketDetail from '@/components/tickets/ticket-detail';
+
+export default function Page() {
+    const [activeTab, setActiveTab] = useState('my-tickets');
+    const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+
+    const handleTicketReply = (ticketId: string) => {
+        setSelectedTicketId(ticketId);
+        setActiveTab('ticket-detail');
+    };
+
+    const handleBackToTickets = () => {
+        setSelectedTicketId(null);
+        setActiveTab('my-tickets');
+    };
+
+    const renderContent = () => {
+        switch (activeTab) {
+            case 'my-tickets':
+                return (
+                    <div className="space-y-6">
+                        <div>
+                            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+                                My Ticket
+                            </h1>
+                            <p className="text-gray-600">Manage and monitor the progress of your support tickets</p>
+                        </div>
+                        <TicketList onReplyClick={handleTicketReply} />
+                    </div>
+                );
+            // case 'create-ticket':
+            //     return (
+            //         <div className="space-y-6">
+            //             <div>
+            //                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            //                     Buat Tiket Baru
+            //                 </h1>
+            //                 <p className="text-gray-600">Kirim permintaan support baru</p>
+            //             </div>
+            //             <TicketForm />
+            //         </div>
+            //     );
+            case 'ticket-detail':
+                return selectedTicketId ? (
+                    <TicketDetail
+                        ticketId={selectedTicketId}
+                        onBack={handleBackToTickets}
+                        isUserView={true}
+                    />
+                ) : (
+                    <div>Tiket tidak ditemukan</div>
+                );
+            default:
+                return <div>Halaman tidak ditemukan</div>;
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-50">
+            {/* Header */}
+            <header className="bg-white shadow-sm border-b">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex justify-between items-center py-4">
+                        <div className="flex items-center">
+                            <div className="bg-blue-600 p-2 rounded-lg mr-3">
+                                <Ticket className="h-6 w-6 text-white" />
+                            </div>
+                            <h1 className="text-xl font-semibold text-gray-900">Support Portal</h1>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <User className="h-5 w-5 text-gray-400" />
+                            <span className="text-sm text-gray-600">john.doe@company.com</span>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            {/* Navigation */}
+            <nav className="bg-white border-b">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div className="flex space-x-8">
+                        <button
+                            onClick={() => setActiveTab('my-tickets')}
+                            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'my-tickets'
+                                ? 'border-blue-500 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                }`}
+                        >
+                            <div className="flex items-center gap-2">
+                                <MessageCircle className="h-4 w-4" />
+                                My Ticket
+                            </div>
+                        </button>
+                        {/* <button
+                            onClick={() => setActiveTab('create-ticket')}
+                            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'create-ticket'
+                                ? 'border-blue-500 text-blue-600'
+                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                }`}
+                        >
+                            <div className="flex items-center gap-2">
+                                <Plus className="h-4 w-4" />
+                                Buat Tiket
+                            </div>
+                        </button> */}
+                    </div>
+                </div>
+            </nav>
+
+            {/* Main Content */}
+            <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                {renderContent()}
+            </main>
+        </div>
+    );
+};
