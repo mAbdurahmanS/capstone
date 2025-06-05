@@ -11,7 +11,7 @@ export async function GET(
   try {
     const rows = await sql`
             SELECT 
-              u.id, u.name, u.email, u.role_id, u.department_id,
+              u.id, u.name, u.email, u.role_id, u.department_id, u.company,
               r.name AS role,
               d.name AS department
             FROM users u
@@ -28,6 +28,7 @@ export async function GET(
       id: rows[0].id,
       name: rows[0].name,
       email: rows[0].email,
+      company: rows[0].company,
       role: {
         id: rows[0].role_id,
         name: rows[0].role,
@@ -56,7 +57,7 @@ export async function PUT(
   try {
     const data = await req.json();
     const { id } = await params; // wajib await params
-    const { name, email, password, role, department } = data;
+    const { name, email, password, role, department, company } = data;
 
     // Cek apakah email sudah dipakai user lain (bukan user dengan id ini)
     const existingUsers = await sql`
@@ -79,6 +80,7 @@ export async function PUT(
         UPDATE users
         SET name = ${name},
             email = ${email},
+            company = ${company},
             password = ${hashedPassword},
             role_id = ${role},
             department_id = ${department},
@@ -90,6 +92,7 @@ export async function PUT(
         UPDATE users
         SET name = ${name},
             email = ${email},
+            company = ${company},
             role_id = ${role},
             department_id = ${department},
             updated_at = now()

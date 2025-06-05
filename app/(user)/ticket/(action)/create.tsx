@@ -13,17 +13,17 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { IconPlus } from "@tabler/icons-react"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
-export default function DialogCreate({ mutateTickets }: { mutateTickets: () => void }) {
+export default function DialogCreate({ mutateTickets, userId }: { mutateTickets: () => void, userId: number }) {
 
     const closeRef = useRef<HTMLButtonElement>(null);
 
     const [formData, setFormData] = useState({
         title: "",
         description: "",
-        customer_id: 2
+        customer_id: userId
     })
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -49,7 +49,7 @@ export default function DialogCreate({ mutateTickets }: { mutateTickets: () => v
                 setFormData({
                     title: "",
                     description: "",
-                    customer_id: 2,
+                    customer_id: userId,
                 })
                 mutateTickets()
             } else {
@@ -61,6 +61,16 @@ export default function DialogCreate({ mutateTickets }: { mutateTickets: () => v
             toast.error("Server error")
         }
     }
+
+    useEffect(() => {
+        if (userId) {
+            setFormData((prev) => ({
+                ...prev,
+                customer_id: userId,
+            }))
+        }
+    }, [userId])
+
 
     return (
         <Dialog>

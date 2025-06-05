@@ -9,21 +9,33 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectLabel,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { IconPlus } from "@tabler/icons-react"
 import { useRef, useState } from "react"
 import { toast } from "sonner"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function DialogCreate({ mutateTickets }: { mutateTickets: () => void }) {
 
     const closeRef = useRef<HTMLButtonElement>(null);
 
+    const { user } = useAuth()
+
     const [formData, setFormData] = useState({
         title: "",
         description: "",
-        customer_id: 2
+        customer_id: user?.id
     })
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -49,7 +61,7 @@ export default function DialogCreate({ mutateTickets }: { mutateTickets: () => v
                 setFormData({
                     title: "",
                     description: "",
-                    customer_id: 2,
+                    customer_id: user?.id,
                 })
                 mutateTickets()
             } else {
@@ -79,6 +91,24 @@ export default function DialogCreate({ mutateTickets }: { mutateTickets: () => v
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-6">
+                        <div className="grid gap-3">
+                            <Label htmlFor="category">Category</Label>
+                            <Select>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        <SelectLabel>Category</SelectLabel>
+                                        <SelectItem value="apple">Apple</SelectItem>
+                                        <SelectItem value="banana">Banana</SelectItem>
+                                        <SelectItem value="blueberry">Blueberry</SelectItem>
+                                        <SelectItem value="grapes">Grapes</SelectItem>
+                                        <SelectItem value="pineapple">Pineapple</SelectItem>
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </div>
                         <div className="grid gap-3">
                             <Label htmlFor="title">Title</Label>
                             <Input

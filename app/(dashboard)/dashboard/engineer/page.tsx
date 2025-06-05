@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation"
 import DialogCreate from "./(action)/create"
 import { useFetchTickets } from "@/hooks/useFetchTickets"
 import { useFetchUsers } from "@/hooks/useFetchUsers"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function Page() {
   const router = useRouter();
@@ -26,72 +27,8 @@ export default function Page() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newUser, setNewUser] = useState({
-    name: '',
-    email: '',
-    role: 'user',
-    department: '',
-  });
+  const { isAdmin } = useAuth()
 
-  // const users = [
-  //   {
-  //     id: 1,
-  //     name: 'John Smith',
-  //     email: 'john@company.com',
-  //     role: 'engineer',
-  //     department: 'IT Support',
-  //     avatar: 'JS',
-  //     status: 'active',
-  //     ticketsCompleted: 47,
-  //     performance: 94,
-  //     joinDate: '2023-01-15',
-  //   },
-  //   {
-  //     id: 2,
-  //     name: 'Sarah Johnson',
-  //     email: 'sarah@company.com',
-  //     role: 'engineer',
-  //     department: 'Software Development',
-  //     avatar: 'SJ',
-  //     status: 'active',
-  //     ticketsCompleted: 32,
-  //     performance: 88,
-  //     joinDate: '2023-03-20',
-  //   },
-  //   {
-  //     id: 3,
-  //     name: 'Mike Davis',
-  //     email: 'mike@company.com',
-  //     role: 'engineer',
-  //     department: 'Hardware Support',
-  //     avatar: 'MD',
-  //     status: 'active',
-  //     ticketsCompleted: 28,
-  //     performance: 91,
-  //     joinDate: '2023-02-10',
-  //   },
-  //   {
-  //     id: 4,
-  //     name: 'Alice Brown',
-  //     email: 'alice@company.com',
-  //     role: 'user',
-  //     department: 'Marketing',
-  //     avatar: 'AB',
-  //     status: 'active',
-  //     joinDate: '2023-04-05',
-  //   },
-  //   {
-  //     id: 5,
-  //     name: 'Bob Wilson',
-  //     email: 'bob@company.com',
-  //     role: 'user',
-  //     department: 'Sales',
-  //     avatar: 'BW',
-  //     status: 'active',
-  //     joinDate: '2023-05-12',
-  //   },
-  // ];
 
   const getRoleColor = (role: string) => {
     return role === 'engineer'
@@ -144,7 +81,7 @@ export default function Page() {
                         />
                       </div>
                     </div>
-                    <DialogCreate mutateUsers={mutateUsers} />
+                    {isAdmin && <DialogCreate mutateUsers={mutateUsers} />}
                   </div>
                 </CardContent>
               </Card>

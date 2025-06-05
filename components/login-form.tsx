@@ -38,7 +38,7 @@ export function LoginForm({
 
       // Redirect berdasarkan role
       if (data.user.role?.id === 1 || data.user.role?.id === 2) {
-        window.location.href = "/dashboard";
+        window.location.href = "/dashboard/performance";
       } else if (data.user.role?.id === 3) {
         window.location.href = "/ticket";
       } else {

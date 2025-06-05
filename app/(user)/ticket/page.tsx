@@ -1,15 +1,29 @@
 "use client";
 
 import React, { useState } from 'react';
-import { Ticket, MessageCircle, User } from 'lucide-react';
+import { Ticket, MessageCircle, User, LogOut } from 'lucide-react';
 import TicketList from '@/components/tickets/ticket-list';
 import TicketDetail from '@/components/tickets/ticket-detail';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/hooks/useAuth';
+import { useRouter } from 'next/navigation';
 
 export default function Page() {
-    const [activeTab, setActiveTab] = useState('my-tickets');
-    const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
+    const router = useRouter()
 
-    const handleTicketReply = (ticketId: string) => {
+    const [activeTab, setActiveTab] = useState('my-tickets');
+    const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
+    const { user } = useAuth()
+
+    const handleTicketReply = (ticketId: number) => {
         setSelectedTicketId(ticketId);
         setActiveTab('ticket-detail');
     };
@@ -17,6 +31,12 @@ export default function Page() {
     const handleBackToTickets = () => {
         setSelectedTicketId(null);
         setActiveTab('my-tickets');
+    };
+
+
+    const handleLogout = async () => {
+        await fetch("/api/auth/logout", { method: "POST" });
+        router.push("/login");
     };
 
     const renderContent = () => {
@@ -33,18 +53,6 @@ export default function Page() {
                         <TicketList onReplyClick={handleTicketReply} />
                     </div>
                 );
-            // case 'create-ticket':
-            //     return (
-            //         <div className="space-y-6">
-            //             <div>
-            //                 <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            //                     Buat Tiket Baru
-            //                 </h1>
-            //                 <p className="text-gray-600">Kirim permintaan support baru</p>
-            //             </div>
-            //             <TicketForm />
-            //         </div>
-            //     );
             case 'ticket-detail':
                 return selectedTicketId ? (
                     <TicketDetail
@@ -70,11 +78,29 @@ export default function Page() {
                             <div className="bg-blue-600 p-2 rounded-lg mr-3">
                                 <Ticket className="h-6 w-6 text-white" />
                             </div>
-                            <h1 className="text-xl font-semibold text-gray-900">Support Portal</h1>
+                            <h1 className="text-xl font-semibold text-gray-900">Capstone</h1>
                         </div>
                         <div className="flex items-center gap-2">
-                            <User className="h-5 w-5 text-gray-400" />
-                            <span className="text-sm text-gray-600">john.doe@company.com</span>
+                            {/* <User className="h-5 w-5 text-gray-400" />
+                            <span className="text-sm text-gray-600">john.doe@company.com</span> */}
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="sm" className="flex items-center space-x-2 hover:bg-gray-100/50 transition-all duration-200">
+                                        <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
+                                            <User className="h-4 w-4 text-white" />
+                                        </div>
+                                        <span className="hidden md:block font-medium">{user?.name}</span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56 bg-white/95 backdrop-blur-xl border border-gray-200/50">
+                                    <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem className="text-red-600 hover:bg-red-50/50" onClick={handleLogout}>
+                                        <LogOut className="mr-2 h-4 w-4 text-red-600" />
+                                        Logout
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     </div>
                 </div>

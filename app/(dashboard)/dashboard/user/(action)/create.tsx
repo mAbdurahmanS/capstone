@@ -23,6 +23,7 @@ export default function DialogCreate({ mutateUsers }: { mutateUsers: () => void 
         name: "",
         email: "",
         password: "",
+        company: "",
         role: 3
     })
 
@@ -50,6 +51,7 @@ export default function DialogCreate({ mutateUsers }: { mutateUsers: () => void 
                     name: "",
                     email: "",
                     password: "",
+                    company: "",
                     role: 2
                 })
                 mutateUsers()
@@ -77,6 +79,16 @@ export default function DialogCreate({ mutateUsers }: { mutateUsers: () => void 
                         <DialogTitle>Add New User</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-6">
+                        <div className="grid gap-3">
+                            <Label htmlFor="company">Company</Label>
+                            <Input
+                                id="company"
+                                name="company"
+                                value={formData.company}
+                                onChange={handleChange}
+                                required
+                            />
+                        </div>
                         <div className="grid gap-3">
                             <Label htmlFor="name">Name</Label>
                             <Input
@@ -114,7 +126,7 @@ export default function DialogCreate({ mutateUsers }: { mutateUsers: () => void 
                         <DialogClose asChild>
                             <Button ref={closeRef} variant="outline">Cancel</Button>
                         </DialogClose>
-                        <Button type="submit">Add Engineer</Button>
+                        <Button type="submit">Add User</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>

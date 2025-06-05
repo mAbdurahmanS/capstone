@@ -6,9 +6,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { ArrowLeft, User, Calendar, Tag, AlertTriangle, Send, MessageCircle, Shield, MessageSquare, Clock } from 'lucide-react';
 import { IconAlertTriangle, IconClock, IconUser } from '@tabler/icons-react';
 import { useFetchProgressLogs } from '@/hooks/useFetchProgressLogs';
+import { useFetchTickets } from '@/hooks/useFetchTickets';
 
 interface TicketDetailProps {
-    ticketId: string;
+    ticketId: number;
     onBack: () => void;
     isUserView?: boolean;
 }
@@ -16,63 +17,9 @@ interface TicketDetailProps {
 export default function TicketDetail({ ticketId, onBack, isUserView = false }: TicketDetailProps) {
     const [newMessage, setNewMessage] = useState('');
 
-    const { progressLogs, mutate: mutateProgressLogs } = useFetchProgressLogs(2);
+    const { tickets: ticket } = useFetchTickets(ticketId);
 
-    // Mock data - in real app this would come from API
-    const ticket = {
-        id: 'TK-2024-001',
-        title: 'Email server connectivity issues',
-        description: 'Unable to connect to email server, getting timeout errors',
-        priority: 'critical',
-        status: 'open',
-        category: 'Technical',
-        customer: 'alice@company.com',
-        assignee: 'John Smith',
-        created: '1/15/2024, 5:30:00 PM',
-        messages: [
-            {
-                id: 1,
-                sender: 'alice@company.com',
-                content: 'Hi, I\'m having trouble connecting to the email server. I keep getting timeout errors when trying to send emails.',
-                timestamp: '1/15/2024, 5:30:00 PM',
-                isCustomer: true
-            },
-            {
-                id: 2,
-                sender: 'John Smith (Engineer)',
-                content: 'Hello Alice, thank you for reporting this issue. I\'m looking into the email server connectivity problem. Can you please provide more details about when this started happening?',
-                timestamp: '1/15/2024, 6:15:00 PM',
-                isCustomer: false
-            }
-        ]
-    };
-    const ticket2 = {
-        "id": 2,
-        "title": "Tes",
-        "description": "cekkk",
-        "priority": {
-            "id": 3,
-            "name": "Low"
-        },
-        "status": {
-            "id": 2,
-            "name": "In Progress"
-        },
-        "customer": {
-            "id": 2,
-            "name": "Cek",
-            "email": "cek@gmail.com"
-        },
-        "engineer": {
-            "id": 3,
-            "name": "Cek2",
-            "email": "cek2@gmail.com"
-        },
-        "created_at": "2025-06-03T14:08:04.049Z",
-        "updated_at": "2025-06-03T18:01:40.282Z",
-        "assigned_at": "2025-06-03T14:11:32.732Z",
-        "resolved_at": null
-    };
+    const { progressLogs, mutate: mutateProgressLogs } = useFetchProgressLogs(ticketId);
 
     const getPriorityColor = (priority: string) => {
         switch (priority) {
@@ -93,22 +40,6 @@ export default function TicketDetail({ ticketId, onBack, isUserView = false }: T
         }
     };
 
-    const updateTicket = async (field: string, value: string) => {
-        try {
-            await fetch(`/api/tickets/${2}`, {
-                method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ [field]: value }),
-            });
-            console.log(`${field} updated to`, value);
-            //   mutate();
-        } catch (error) {
-            console.error('Failed to update ticket:', error);
-        }
-    };
-
     const handleSendMessage = async () => {
         if (!newMessage.trim()) return; // mencegah kirim pesan kosong
 
@@ -120,8 +51,8 @@ export default function TicketDetail({ ticketId, onBack, isUserView = false }: T
                 },
                 body: JSON.stringify({
                     note: newMessage,
-                    ticket_id: id,  // pastikan ini ada
-                    user_id: ticket?.engineer?.id,       // pastikan ini ada
+                    ticket_id: ticketId,  // pastikan ini ada
+                    user_id: ticket?.customer?.id,       // pastikan ini ada
                 }),
             });
 
@@ -156,32 +87,37 @@ export default function TicketDetail({ ticketId, onBack, isUserView = false }: T
             </Button>
             <div className="flex items-center justify-between items-center">
                 <div>
-                    <p className=" text mb-1 font-medium ">TK-{ticket2.id}-{new Date(ticket2.created_at).toLocaleDateString("en-GB", {
+                    <p className=" text mb-1 font-medium ">TK-{ticket.id}-{new Date(ticket.created_at).toLocaleDateString("en-GB", {
                         year: "2-digit",
                         month: "2-digit",
                     }).replace("/", "-")}</p>
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">{ticket2.title}</h1>
+                    <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-blue-600 to-purple-600 bg-clip-text text-transparent mb-4">{ticket.title}</h1>
 
                     <div className="flex flex-col md:flex-row md:items-center gap-4 text-sm text-gray-500">
                         <div className="flex items-center gap-1">
                             <IconClock className="h-4 w-4" />
-                            <span>Created: {new Date(ticket2.created_at).toLocaleDateString()}</span>
+                            <span>Created: {new Date(ticket.created_at).toLocaleDateString()}</span>
                         </div>
                         <div className="flex items-center gap-1">
                             <IconUser className="h-4 w-4" />
-                            <span>Engineer: {ticket2.engineer?.name}</span>
+                            <span>Engineer: {ticket.engineer?.name}</span>
                         </div>
                     </div>
                 </div>
                 <div className="flex items-center gap-3">
-                    <Badge className={`${getPriorityColor(ticket2.priority?.name)} px-4 py-2 text-sm font-semibold shadow-lg`}>
-                        {/* <AlertTriangle className="h-4 w-4 mr-2" /> */}
-                        {ticket2.priority?.name.charAt(0).toUpperCase() + ticket2.priority?.name.slice(1)}
-                    </Badge>
-                    <Badge className={`${getStatusColor(ticket2.status?.name)} px-4 py-2 text-sm font-semibold shadow-lg`}>
-                        {/* <Shield className="h-4 w-4 mr-2" /> */}
-                        {ticket2.status?.name.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
-                    </Badge>
+                    {ticket?.priority && ticket?.priority?.name && (
+
+                        <Badge className={`${getPriorityColor(ticket.priority?.name)} px-4 py-2 text-sm font-semibold shadow-lg`}>
+                            {/* <AlertTriangle className="h-4 w-4 mr-2" /> */}
+                            {ticket.priority?.name.charAt(0).toUpperCase() + ticket.priority?.name.slice(1)}
+                        </Badge>
+                    )}
+                    {ticket?.status && ticket?.status?.name && (
+                        <Badge className={`${getStatusColor(ticket.status?.name)} px-4 py-2 text-sm font-semibold shadow-lg`}>
+                            {/* <Shield className="h-4 w-4 mr-2" /> */}
+                            {ticket.status?.name.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                        </Badge>
+                    )}
                 </div>
             </div>
 
@@ -204,24 +140,24 @@ export default function TicketDetail({ ticketId, onBack, isUserView = false }: T
                     <CardContent className="flex-1 p-0 overflow-hidden flex flex-col">
                         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-gradient-to-b from-gray-50/50 to-white">
                             <div
-                                className={`flex justify-start animate-fade-in`}
+                                className={`flex justify-end animate-fade-in`}
                             >
-                                <div className={`max-w-[85%] order-2`}>
+                                <div className={`max-w-[85%] order-1`}>
                                     <div
-                                        className={`p-5 rounded-3xl shadow-lg backdrop-blur-sm transition-all duration-200 hover:shadow-xl bg-white border border-gray-100 text-gray-900 rounded-tl-lg ml-4`}
+                                        className={`p-5 rounded-3xl shadow-lg backdrop-blur-sm transition-all duration-200 hover:shadow-xl bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500 text-white rounded-tr-lg mr-4`}
                                     >
                                         <div className="flex items-center gap-2 mb-3">
-                                            <div className={`p-1.5 rounded-full bg-blue-100`}>
-                                                <User className={`h-4 w-4 text-blue-600`} />
+                                            <div className={`p-1.5 rounded-full bg-white/20`}>
+                                                <User className={`h-4 w-4 text-white`} />
                                             </div>
                                             <span className="text-sm font-semibold">
-                                                {ticket2?.customer?.name}
+                                                {ticket?.customer?.name}
                                             </span>
                                         </div>
-                                        <p className="text-sm leading-relaxed mb-3">{ticket2?.description}</p>
-                                        <div className={`flex items-center gap-1 text-xs text-gray-500`}>
+                                        <p className="text-sm leading-relaxed mb-3">{ticket?.description}</p>
+                                        <div className={`flex items-center gap-1 text-xs text-white/80`}>
                                             <Clock className="h-3 w-3" />
-                                            {new Date(ticket2.created_at).toLocaleString("id-ID", {
+                                            {new Date(ticket.created_at).toLocaleString("id-ID", {
                                                 timeZone: "Asia/Jakarta",
                                                 hour12: false,
                                             })}
@@ -232,29 +168,29 @@ export default function TicketDetail({ ticketId, onBack, isUserView = false }: T
                             {progressLogs.map((message) => (
                                 <div
                                     key={message.id}
-                                    className={`flex ${message.user?.role === 'User' ? 'justify-start' : 'justify-end'} animate-fade-in`}
+                                    className={`flex ${message.user?.role === 'Engineer' ? 'justify-start' : 'justify-end'} animate-fade-in`}
                                 >
-                                    <div className={`max-w-[85%] ${message.user?.role === 'User' ? 'order-2' : 'order-1'}`}>
+                                    <div className={`max-w-[85%] ${message.user?.role === 'Engineer' ? 'order-2' : 'order-1'}`}>
                                         <div
-                                            className={`p-5 rounded-3xl shadow-lg backdrop-blur-sm transition-all duration-200 hover:shadow-xl ${message.user?.role === 'User'
+                                            className={`p-5 rounded-3xl shadow-lg backdrop-blur-sm transition-all duration-200 hover:shadow-xl ${message.user?.role === 'Engineer'
                                                 ? 'bg-white border border-gray-100 text-gray-900 rounded-tl-lg ml-4'
                                                 : 'bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500 text-white rounded-tr-lg mr-4'
                                                 }`}
                                         >
                                             <div className="flex items-center gap-2 mb-3">
-                                                <div className={`p-1.5 rounded-full ${message.user?.role === 'User' ? 'bg-blue-100' : 'bg-white/20'}`}>
-                                                    {message.user?.role === 'User' ? (
-                                                        <User className={`h-4 w-4 ${message.user?.role === 'User' ? 'text-blue-600' : 'text-white'}`} />
-                                                    ) : (
+                                                <div className={`p-1.5 rounded-full ${message.user?.role === 'Engineer' ? 'bg-blue-100' : 'bg-white/20'}`}>
+                                                    {message.user?.role === 'Engineer' ? (
                                                         <Shield className="h-4 w-4 text-white" />
+                                                    ) : (
+                                                        <User className={`h-4 w-4 ${message.user?.role === 'Engineer' ? 'text-blue-600' : 'text-white'}`} />
                                                     )}
                                                 </div>
                                                 <span className="text-sm font-semibold">
-                                                    {message.user?.role === 'User' ? message?.user?.name : `${message?.user?.name} (Engineer)`}
+                                                    {message.user?.role === 'Engineer' ? message?.user?.name : `${message?.user?.name} (Engineer)`}
                                                 </span>
                                             </div>
                                             <p className="text-sm leading-relaxed mb-3">{message.note}</p>
-                                            <div className={`flex items-center gap-1 text-xs ${message.user?.role === 'User' ? 'text-gray-500' : 'text-white/80'}`}>
+                                            <div className={`flex items-center gap-1 text-xs ${message.user?.role === 'Engineer' ? 'text-gray-500' : 'text-white/80'}`}>
                                                 <Clock className="h-3 w-3" />
                                                 {new Date(message.created_at).toLocaleString("id-ID", {
                                                     timeZone: "Asia/Jakarta",

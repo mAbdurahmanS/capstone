@@ -1,6 +1,5 @@
 "use client"
 
-import { SectionCards } from "@/components/section-cards"
 import { Badge } from "@/components/ui/badge"
 import {
   Card,
@@ -11,17 +10,19 @@ import {
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { IconAlertTriangle, IconClock, IconMessageCircle, IconPlus, IconSearch, IconUser } from "@tabler/icons-react"
+import { IconAlertTriangle, IconClock, IconMessageCircle, IconSearch, IconUser } from "@tabler/icons-react"
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import DialogCreate from "./(action)/create"
 import { useFetchTickets } from "@/hooks/useFetchTickets"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function Page() {
   const router = useRouter();
 
   const { tickets, mutate: mutateTickets } = useFetchTickets();
+  const { user, isAdmin, isEngineer } = useAuth()
 
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterPriority, setFilterPriority] = useState('all');
@@ -47,10 +48,12 @@ export default function Page() {
   };
 
   const filteredTickets = tickets.filter(ticket => {
+    if (isEngineer && ticket.engineer?.id !== user.id) {
+      return false;
+    }
     const matchesStatus = filterStatus === 'all' || ticket.status?.name === filterStatus;
     const matchesPriority = filterPriority === 'all' || ticket.priority?.name === filterPriority;
-    const matchesSearch = ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      ticket.id.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = ticket.title.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesStatus && matchesPriority && matchesSearch;
   });
 
@@ -109,7 +112,7 @@ export default function Page() {
                         <SelectItem value="Low">Low</SelectItem>
                       </SelectContent>
                     </Select>
-                    <DialogCreate mutateTickets={mutateTickets} />
+                    {isAdmin && <DialogCreate mutateTickets={mutateTickets} />}
                   </div>
                 </CardContent>
               </Card>

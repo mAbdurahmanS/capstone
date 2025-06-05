@@ -9,6 +9,7 @@ import {
   IconCategory,
   IconBuilding,
   IconUsersGroup,
+  IconChartBarPopular,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -22,6 +23,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { Ticket } from "lucide-react"
+import { useAuth } from "@/hooks/useAuth"
 
 const data = {
   user: {
@@ -30,10 +33,15 @@ const data = {
     avatar: "/avatars/shadcn.jpg",
   },
   navMain: [
+    // {
+    //   title: "Dashboard",
+    //   url: "/dashboard",
+    //   icon: IconDashboard,
+    // },
     {
-      title: "Dashboard",
-      url: "/dashboard",
-      icon: IconDashboard,
+      title: "Performance",
+      url: "/dashboard/performance",
+      icon: IconChartBarPopular,
     },
     {
       title: "Ticket",
@@ -44,11 +52,13 @@ const data = {
       title: "Engineer",
       url: "/dashboard/engineer",
       icon: IconUsersGroup,
+      onlyAdmin: true,
     },
     {
       title: "User",
       url: "/dashboard/user",
       icon: IconUser,
+      onlyAdmin: true,
     },
     // {
     //   title: "Category",
@@ -64,21 +74,8 @@ const data = {
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const [user, setUser] = React.useState<any>(null)
 
-  React.useEffect(() => {
-    const getUser = async () => {
-      const res = await fetch("/api/auth/me")
-      if (res.ok) {
-        const data = await res.json()
-        setUser(data.user)
-      } else {
-        console.error("Unauthorized")
-      }
-    }
-
-    getUser()
-  }, [])
+  const { user, isAdmin } = useAuth()
 
   if (!user) return null // atau loader
 
@@ -92,7 +89,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               className="data-[slot=sidebar-menu-button]:!p-1.5"
             >
               <a href="#">
-                <IconInnerShadowTop className="!size-5" />
+                <div className="bg-blue-600 p-2 rounded-lg">
+                  <Ticket className="h-6 w-6 text-white" />
+                </div>
+                {/* <IconInnerShadowTop className="!size-5" /> */}
                 <span className="text-base font-semibold">Capstone</span>
               </a>
             </SidebarMenuButton>
@@ -100,7 +100,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
+        <NavMain items={data.navMain.filter(item => !item.onlyAdmin || isAdmin)} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={user} />

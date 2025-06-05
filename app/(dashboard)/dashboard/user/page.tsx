@@ -18,6 +18,7 @@ import { useRouter } from "next/navigation"
 import DialogCreate from "./(action)/create"
 import { useFetchTickets } from "@/hooks/useFetchTickets"
 import { useFetchUsers } from "@/hooks/useFetchUsers"
+import { useAuth } from "@/hooks/useAuth"
 
 export default function Page() {
   const router = useRouter();
@@ -26,6 +27,7 @@ export default function Page() {
 
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState('all');
+  const { isAdmin } = useAuth()
 
   const getRoleColor = (role: string) => {
     return role === 'engineer'
@@ -78,7 +80,7 @@ export default function Page() {
                         />
                       </div>
                     </div>
-                    <DialogCreate mutateUsers={mutateUsers} />
+                    {isAdmin && <DialogCreate mutateUsers={mutateUsers} />}
                   </div>
                 </CardContent>
               </Card>
@@ -105,7 +107,7 @@ export default function Page() {
                             </div>
                             <div className="flex items-center gap-1">
                               <IconBuildings className="h-4 w-4" />
-                              <span>{user.company?.name ?? "Tokopedia"}</span>
+                              <span>{user?.company ?? "Tokopedia"}</span>
                             </div>
                             <div className="flex items-center gap-1">
                               <span>Joined: {new Date(user.created_at).toLocaleDateString()}</span>

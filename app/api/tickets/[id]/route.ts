@@ -110,7 +110,7 @@ export async function PUT(
     }
 
     // Update resolved_at jika status = 3 atau 4
-    if ("status_id" in data && [3, 4].includes(Number(data.status))) {
+    if ("status_id" in data && [3, 4].includes(Number(data.status_id))) {
       fieldsToUpdate["resolved_at"] = new Date();
     }
 

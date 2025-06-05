@@ -15,6 +15,7 @@ import { useFetchStatus } from '@/hooks/useFetchStatus';
 import { useFetchPriorities } from '@/hooks/useFetchPriorities';
 import { useFetchUsers } from '@/hooks/useFetchUsers';
 import { useFetchProgressLogs } from '@/hooks/useFetchProgressLogs';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function Page({ params }: { params: Promise<{ id: number }> }) {
   const router = useRouter();
@@ -25,6 +26,7 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
   const { statuses } = useFetchStatus()
   const { priorities } = useFetchPriorities()
   const { users } = useFetchUsers(null, 2)
+  const { isAdmin } = useAuth()
 
   const [newMessage, setNewMessage] = useState('');
 
@@ -139,6 +141,7 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
                   onValueChange={(value) => {
                     updateTicket('priority_id', value);
                   }}
+                  disabled={!isAdmin}
                 >
                   <SelectTrigger className="mt-3 shadow-sm rounded-lg w-full">
                     <SelectValue placeholder="Select Priority" />
@@ -163,6 +166,7 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
                   onValueChange={(value) => {
                     updateTicket('status_id', value);
                   }}
+                  disabled={!isAdmin}
                 >
                   <SelectTrigger className="mt-3 shadow-sm rounded-lg w-full">
                     <SelectValue placeholder="Select Status" />
@@ -186,6 +190,7 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
                   onValueChange={(value) => {
                     updateTicket('engineer_id', value);
                   }}
+                  disabled={!isAdmin}
                 >
                   <SelectTrigger className="mt-3 shadow-sm rounded-lg w-full">
                     <SelectValue placeholder="Select Engineer" />

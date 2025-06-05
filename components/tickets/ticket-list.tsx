@@ -5,17 +5,19 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Clock, MessageCircle, Search, AlertCircle } from 'lucide-react';
-import { IconClock, IconMessageCircle, IconSearch } from '@tabler/icons-react';
+import { IconClock, IconMessageCircle, IconSearch, IconUser } from '@tabler/icons-react';
 import DialogCreate from '@/app/(user)/ticket/(action)/create';
 import { useFetchTickets } from '@/hooks/useFetchTickets';
+import { useAuth } from '@/hooks/useAuth';
 
 interface UserTicketListProps {
-    onReplyClick: (ticketId: string) => void;
+    onReplyClick: (ticketId: number) => void;
 }
 
 export default function TicketList({ onReplyClick }: UserTicketListProps) {
 
     const { tickets, mutate: mutateTickets } = useFetchTickets();
+    const { user, isUser } = useAuth()
 
     const [filterStatus, setFilterStatus] = useState('all');
     const [filterPriority, setFilterPriority] = useState('all');
@@ -41,16 +43,19 @@ export default function TicketList({ onReplyClick }: UserTicketListProps) {
     };
 
     const filteredTickets = tickets.filter(ticket => {
-        const matchesStatus = filterStatus === 'all' || ticket.status === filterStatus;
-        const matchesSearch = ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            ticket.id.toLowerCase().includes(searchTerm.toLowerCase());
-        return matchesStatus && matchesSearch;
+        if (isUser && ticket.customer?.id !== user.id) {
+            return false;
+        }
+        const matchesStatus = filterStatus === 'all' || ticket.status?.name === filterStatus;
+        const matchesPriority = filterPriority === 'all' || ticket.priority?.name === filterPriority;
+        const matchesSearch = ticket.title.toLowerCase().includes(searchTerm.toLowerCase());
+        return matchesStatus && matchesPriority && matchesSearch;
     });
 
     return (
         <div className="space-y-6">
             {/* Quick Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Card>
                     <CardContent className="p-4">
                         <div className="flex items-center justify-between">
@@ -99,9 +104,9 @@ export default function TicketList({ onReplyClick }: UserTicketListProps) {
                         <div className="flex items-center justify-between">
                             <div>
                                 <p className="text-sm font-medium text-gray-600">Balasan Baru</p>
-                                {/* <p className="text-2xl font-bold text-red-600">
+                                <p className="text-2xl font-bold text-red-600">
                                     {tickets.reduce((sum, t) => sum + t.unreadReplies, 0)}
-                                </p> */}
+                                </p>
                             </div>
                             <div className="p-2 bg-red-100 rounded-lg">
                                 <AlertCircle className="h-5 w-5 text-red-600" />
@@ -109,7 +114,7 @@ export default function TicketList({ onReplyClick }: UserTicketListProps) {
                         </div>
                     </CardContent>
                 </Card>
-            </div>
+            </div> */}
 
             {/* Filters */}
             <Card>
@@ -152,7 +157,7 @@ export default function TicketList({ onReplyClick }: UserTicketListProps) {
                                 <SelectItem value="Low">Low</SelectItem>
                             </SelectContent>
                         </Select>
-                        <DialogCreate mutateTickets={mutateTickets} />
+                        <DialogCreate mutateTickets={mutateTickets} userId={user?.id} />
                     </div>
                 </CardContent>
             </Card>
@@ -170,12 +175,16 @@ export default function TicketList({ onReplyClick }: UserTicketListProps) {
                                             month: "2-digit",
                                         }).replace("/", "-")}
                                     </h3>
-                                    <Badge className={getPriorityColor(ticket.priority?.name)}>
-                                        {ticket.priority?.name}
-                                    </Badge>
-                                    <Badge className={getStatusColor(ticket.status?.name)}>
-                                        {ticket.status.name}
-                                    </Badge>
+                                    {ticket.priority && ticket?.priority?.name && (
+                                        <Badge className={getPriorityColor(ticket.priority?.name)}>
+                                            {ticket.priority?.name}
+                                        </Badge>
+                                    )}
+                                    {ticket.status && ticket?.status?.name && (
+                                        <Badge className={getStatusColor(ticket.status?.name)}>
+                                            {ticket.status.name}
+                                        </Badge>
+                                    )}
                                     {ticket.unreadReplies > 0 && (
                                         <Badge className="bg-red-100 text-red-800 border-red-200">
                                             {ticket.unreadReplies} balasan baru
@@ -197,15 +206,15 @@ export default function TicketList({ onReplyClick }: UserTicketListProps) {
                             <div className="flex flex-col md:flex-row md:items-center gap-4 text-sm text-gray-500">
                                 <div className="flex items-center gap-1">
                                     <IconClock className="h-4 w-4" />
-                                    <span>Created: {new Date(ticket.created).toLocaleDateString('id-ID')}</span>
+                                    <span>Created: {new Date(ticket.created_at).toLocaleDateString('id-ID')}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
-                                    <IconMessageCircle className="h-4 w-4" />
-                                    <span>Engineer: {ticket.assignee}</span>
+                                    <IconUser className="h-4 w-4" />
+                                    <span>Engineer: {ticket.engineer?.name}</span>
                                 </div>
                                 <div className="flex items-center gap-1">
                                     <IconClock className="h-4 w-4" />
-                                    <span>Last Update: {new Date(ticket.updated).toLocaleDateString('id-ID')}</span>
+                                    <span>Last Update: {new Date(ticket.updated_at).toLocaleDateString('id-ID')}</span>
                                 </div>
                             </div>
                         </CardContent>
