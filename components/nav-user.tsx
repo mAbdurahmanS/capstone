@@ -29,6 +29,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { useRouter } from "next/navigation"
+import DialogEditUser from "./user/user-edit"
+import { useFetchUsers } from "@/hooks/useFetchUsers"
 
 export function NavUser({
   user,
@@ -91,13 +93,12 @@ export function NavUser({
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {/* <DropdownMenuGroup>
-              <DropdownMenuItem onClick={() => router.push("/account")}>
-                <IconUserCircle />
-                Account
+            <DropdownMenuGroup>
+              <DropdownMenuItem>
+                <DialogEditUser />
               </DropdownMenuItem>
             </DropdownMenuGroup>
-            <DropdownMenuSeparator /> */}
+            <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
               <IconLogout />
               Log out

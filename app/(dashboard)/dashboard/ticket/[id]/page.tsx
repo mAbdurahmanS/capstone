@@ -1,15 +1,14 @@
 "use client";
 
 import React, { use, useState } from 'react';
-import { ArrowLeft, Send, User, Clock, AlertTriangle, Settings, Calendar, Tag, Shield, MessageSquare } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+import { Send, User, Clock, AlertTriangle, Shield, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
 import { useRouter } from 'next/navigation';
-import { IconAlertTriangle, IconClock, IconUser } from '@tabler/icons-react';
+import { IconAlertTriangle, IconClock } from '@tabler/icons-react';
 import { useFetchTickets } from '@/hooks/useFetchTickets';
 import { useFetchStatus } from '@/hooks/useFetchStatus';
 import { useFetchPriorities } from '@/hooks/useFetchPriorities';
@@ -43,25 +42,6 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
       mutate();
     } catch (error) {
       console.error('Failed to update ticket:', error);
-    }
-  };
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'Critical': return 'bg-gradient-to-r from-red-500 to-red-600 text-white border-red-300 shadow-red-200';
-      case 'Medium': return 'bg-gradient-to-r from-orange-500 to-orange-600 text-white border-orange-300 shadow-orange-200';
-      case 'Low': return 'bg-gradient-to-r from-green-500 to-green-600 text-white border-green-300 shadow-green-200';
-      default: return 'bg-gradient-to-r from-gray-500 to-gray-600 text-white border-gray-300 shadow-gray-200';
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Open': return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-blue-300 shadow-blue-200';
-      case 'In Progress': return 'bg-gradient-to-r from-purple-500 to-purple-600 text-white border-purple-300 shadow-purple-200';
-      case 'Resolved': return 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white border-emerald-300 shadow-emerald-200';
-      case 'Closed': return 'bg-gradient-to-r from-slate-500 to-slate-600 text-white border-slate-300 shadow-slate-200';
-      default: return 'bg-gradient-to-r from-gray-500 to-gray-600 text-white border-gray-300 shadow-gray-200';
     }
   };
 
@@ -141,7 +121,7 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
                   onValueChange={(value) => {
                     updateTicket('priority_id', value);
                   }}
-                  disabled={!isAdmin}
+                // disabled={!isAdmin}
                 >
                   <SelectTrigger className="mt-3 shadow-sm rounded-lg w-full">
                     <SelectValue placeholder="Select Priority" />
@@ -166,7 +146,7 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
                   onValueChange={(value) => {
                     updateTicket('status_id', value);
                   }}
-                  disabled={!isAdmin}
+                // disabled={!isAdmin}
                 >
                   <SelectTrigger className="mt-3 shadow-sm rounded-lg w-full">
                     <SelectValue placeholder="Select Status" />

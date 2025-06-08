@@ -17,6 +17,7 @@ export const useFetchProgressLogs = (
 
   const { data, error, mutate } = useSWR(endpoint, fetcher, {
     revalidateOnFocus: false,
+    refreshInterval: 2000,
   });
 
   return {

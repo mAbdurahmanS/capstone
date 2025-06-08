@@ -2,14 +2,12 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useState } from "react"
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"form">) {
-  const router = useRouter()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -37,8 +35,10 @@ export function LoginForm({
       }
 
       // Redirect berdasarkan role
-      if (data.user.role?.id === 1 || data.user.role?.id === 2) {
-        window.location.href = "/dashboard/performance";
+      if (data.user.role?.id === 1) {
+        window.location.href = "/dashboard";
+      } else if (data.user.role?.id === 2) {
+        window.location.href = "/dashboard";
       } else if (data.user.role?.id === 3) {
         window.location.href = "/ticket";
       } else {

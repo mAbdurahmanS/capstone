@@ -11,6 +11,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useFetchPerformanceEngineer } from '@/hooks/useFetchPerformanceEngineer';
+import ReactDOM from 'react-dom/client';
+
 
 export const description = "A donut chart with text"
 const chartData = [
@@ -51,6 +53,8 @@ export default function Page() {
     const totalVisitors = React.useMemo(() => {
         return chartData.reduce((acc, curr) => acc + curr.visitors, 0)
     }, [])
+
+    const chartRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
     const { performanceEngineer } = useFetchPerformanceEngineer()
 
@@ -103,6 +107,51 @@ export default function Page() {
         return null;
     };
 
+    const captureEngineerChart = async (engineer) => {
+        return new Promise(async (resolve) => {
+            const container = document.createElement("div");
+            container.style.position = "absolute";
+            container.style.left = "-9999px";
+            container.style.top = "-9999px";
+            document.body.appendChild(container);
+
+            const root = ReactDOM.createRoot(container);
+            root.render(
+                <div style={{ display: 'flex', gap: 24, background: '#fff', padding: 12 }}>
+                    {[getEngineerChartData(engineer).resolvedData, getEngineerChartData(engineer).avgTimeData, getEngineerChartData(engineer).performanceData].map((data, i) => (
+                        <div style={{ width: 100, height: 100 }} key={i}>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                    <Pie
+                                        data={data}
+                                        dataKey="value"
+                                        innerRadius={30}
+                                        outerRadius={45}
+                                        startAngle={90}
+                                        endAngle={-270}
+                                    >
+                                        {data.map((entry, idx) => (
+                                            <Cell key={idx} fill={entry.color} />
+                                        ))}
+                                    </Pie>
+                                </PieChart>
+                            </ResponsiveContainer>
+                        </div>
+                    ))}
+                </div>
+            );
+
+            await new Promise((r) => setTimeout(r, 300));
+            const canvas = await html2canvas(container);
+            const img = canvas.toDataURL("image/png");
+
+            root.unmount();
+            container.remove();
+
+            resolve(img);
+        });
+    };
+
     const generatePDF = async () => {
         const doc = new jsPDF();
         const currentDate = new Date().toLocaleDateString('id-ID');
@@ -116,36 +165,17 @@ export default function Page() {
         doc.setFont('helvetica', 'normal');
         doc.text(`Tanggal: ${currentDate}`, 20, 45);
 
-        // Capture charts if available
-        let chartImage = null;
-        if (chartRef.current) {
-            try {
-                const canvas = await html2canvas(chartRef.current, {
-                    backgroundColor: 'white',
-                    scale: 1,
-                    height: 300,
-                    width: 800
-                });
-                chartImage = canvas.toDataURL('image/png');
-            } catch (error) {
-                console.log('Could not capture chart:', error);
-            }
-        }
-
         if (selectedEngineer === 'all') {
             // Generate report untuk semua engineer
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
             doc.text('Laporan Semua Engineer', 20, 65);
 
-            // Add chart if captured
-            if (chartImage) {
-                doc.addImage(chartImage, 'PNG', 20, 75, 170, 60);
-            }
+            let yPosition = 85;
 
-            let yPosition = chartImage ? 150 : 85;
+            for (let index = 0; index < performanceEngineer.length; index++) {
+                const engineer = performanceEngineer[index];
 
-            performanceEngineer.forEach((engineer, index) => {
                 if (yPosition > 250) {
                     doc.addPage();
                     yPosition = 30;
@@ -161,12 +191,28 @@ export default function Page() {
                 doc.text(`   Average Resolution Time: ${engineer.avgTime}`, 20, yPosition + 45);
                 doc.text(`   Performance: ${engineer.efficiency}%`, 20, yPosition + 60);
 
-                // Add resolution rate calculation
                 const resolutionRate = ((engineer.resolved / engineer.assigned) * 100).toFixed(1);
                 doc.text(`   Resolution Rate: ${resolutionRate}%`, 20, yPosition + 75);
 
+                const chartElement = chartRefs.current[engineer.id];
+                if (chartElement) {
+                    // Simpan warna lama & override background
+                    const originalBg = chartElement.style.backgroundColor;
+                    chartElement.style.backgroundColor = '#fff'; // fallback aman
+
+                    const canvas = await html2canvas(chartElement, {
+                        backgroundColor: '#ffffff',
+                        scale: 1,
+                        useCORS: true,
+                    });
+
+                    chartElement.style.backgroundColor = originalBg; // restore
+                    const chartImage = canvas.toDataURL('image/png');
+                    doc.addImage(chartImage, 'PNG', 100, yPosition, 90, 50);
+                }
+
                 yPosition += 95;
-            });
+            }
 
             // Summary
             const totalAssigned = performanceEngineer.reduce((sum, eng) => sum + eng.assigned, 0);
@@ -194,12 +240,6 @@ export default function Page() {
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
             doc.text(`Laporan Performance - ${engineer.name}`, 20, 65);
-
-            // Create individual donut chart data for this engineer
-            const engineerResolvedData = [
-                { name: 'Solved', value: engineer.resolved, color: '#10b981' },
-                { name: 'Remaining', value: engineer.assigned - engineer.resolved, color: '#ef4444' }
-            ];
 
             doc.setFontSize(12);
             doc.setFont('helvetica', 'normal');
@@ -250,7 +290,7 @@ export default function Page() {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <Card className="flex flex-col">
                             <CardHeader className="items-center pb-0">
                                 <CardTitle>Total Ticket Resolved</CardTitle>
@@ -443,12 +483,12 @@ export default function Page() {
                                 </div>
                             </CardFooter>
                         </Card>
-                    </div>
+                    </div> */}
 
                     {/* Export Section */}
                     <Card>
                         <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
+                            <CardTitle className="flex items-center gap-2 text-2xl">
                                 <FileText className="h-5 w-5" />
                                 Export Performance Report
                             </CardTitle>
@@ -484,7 +524,7 @@ export default function Page() {
                     {/* Engineer Performance Details with Charts */}
                     <Card>
                         <CardHeader>
-                            <CardTitle>Engineer Performance Details</CardTitle>
+                            <CardTitle className='text-2xl'>Engineer Performance Details</CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-6">
@@ -492,7 +532,7 @@ export default function Page() {
                                     const { resolvedData, avgTimeData, performanceData } = getEngineerChartData(engineer);
 
                                     return (
-                                        <div key={index} className="p-6 bg-gray-50 rounded-lg">
+                                        <div key={index} ref={(el) => (chartRefs.current[engineer.id] = el)} className="p-6 bg-gray-50 rounded-lg">
                                             <div className="flex items-center justify-between mb-4">
                                                 <div>
                                                     <div className="font-medium text-lg">{engineer.name}</div>

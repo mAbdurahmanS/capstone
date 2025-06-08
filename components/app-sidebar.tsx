@@ -10,6 +10,7 @@ import {
   IconBuilding,
   IconUsersGroup,
   IconChartBarPopular,
+  IconUserShield,
 } from "@tabler/icons-react"
 
 import { NavMain } from "@/components/nav-main"
@@ -33,11 +34,11 @@ const data = {
     avatar: "/avatars/shadcn.jpg",
   },
   navMain: [
-    // {
-    //   title: "Dashboard",
-    //   url: "/dashboard",
-    //   icon: IconDashboard,
-    // },
+    {
+      title: "Dashboard",
+      url: "/dashboard",
+      icon: IconDashboard,
+    },
     {
       title: "Performance",
       url: "/dashboard/performance",
@@ -47,6 +48,12 @@ const data = {
       title: "Ticket",
       url: "/dashboard/ticket",
       icon: IconTicket,
+    },
+    {
+      title: "Admin",
+      url: "/dashboard/admin",
+      icon: IconUserShield,
+      onlyAdmin: true,
     },
     {
       title: "Engineer",
