@@ -5,18 +5,18 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("token")?.value;
 
-  const isLoginPage = pathname === "/login";
-  const isRegisterPage = pathname === "/login";
+  const isLoginPage = pathname === "/";
+  const isRegisterPage = pathname === "/";
 
   if (!token && !isLoginPage) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   if (token) {
     try {
       const user = await verifyToken(token); // { id: number, ... }
 
-      // Jika sudah login dan coba ke /login, redirect ke dashboard
+      // Jika sudah login dan coba ke /, redirect ke dashboard
       if (isLoginPage) {
         return NextResponse.redirect(new URL("/dashboard", request.url));
       }
@@ -35,7 +35,7 @@ export async function middleware(request: NextRequest) {
       }
     } catch (err) {
       console.error("Invalid token", err);
-      const res = NextResponse.redirect(new URL("/login", request.url));
+      const res = NextResponse.redirect(new URL("/", request.url));
       res.cookies.delete("token");
       return res;
     }
@@ -45,5 +45,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/ticket", "/dashboard/:path*", "/login"],
+  matcher: ["/ticket", "/dashboard/:path*", "/"],
 };

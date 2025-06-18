@@ -44,7 +44,7 @@ export default function Page() {
 
     const handleLogout = async () => {
         await fetch("/api/auth/logout", { method: "POST" });
-        router.push("/login");
+        router.push("/");
     };
 
     const renderContent = () => {
@@ -91,6 +91,8 @@ export default function Page() {
                         <div className="flex items-center gap-2">
                             {/* <User className="h-5 w-5 text-gray-400" />
                             <span className="text-sm text-gray-600">john.doe@company.com</span> */}
+
+                            {/* Tampilan Info User yang sedang login */}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Button variant="ghost" size="sm" className="flex items-center space-x-2 hover:bg-gray-100/50 transition-all duration-200">
