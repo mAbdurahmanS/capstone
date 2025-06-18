@@ -3,6 +3,7 @@
 import { GalleryVerticalEnd } from "lucide-react"
 
 import { LoginForm } from "@/components/login-form"
+import Image from "next/image"
 
 export default function LoginPage() {
   return (
@@ -23,9 +24,12 @@ export default function LoginPage() {
         </div>
       </div>
       <div className="bg-muted relative hidden lg:block">
-        <img
-          src="/login-image.jpg"
+        <Image
+          src="https://static.vecteezy.com/system/resources/previews/028/241/446/non_2x/screen-technology-background-use-the-login-to-access-the-system-it-is-a-illustration-designed-to-look-modern-and-hi-tech-suitable-for-work-related-to-technology-vector.jpg"
           alt="Image"
+          width={1000}
+          height={1000}
+          unoptimized
           className="absolute inset-0 h-full w-full object-cover dark:brightness-[0.2] dark:grayscale"
         />
       </div>

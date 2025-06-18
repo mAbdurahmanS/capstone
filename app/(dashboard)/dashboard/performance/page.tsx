@@ -1,79 +1,35 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { ResponsiveContainer, PieChart, Pie, Cell, Label } from 'recharts';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
-import { Clock, TrendingUp, Award, Target, Download, FileText } from 'lucide-react';
-import { ChartConfig, ChartContainer, ChartTooltip, ChartTooltipContent } from '@/components/ui/chart';
-import React, { useState, useRef } from 'react';
+import { Download, FileText } from 'lucide-react';
+import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
+import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useFetchPerformanceEngineer } from '@/hooks/useFetchPerformanceEngineer';
-import ReactDOM from 'react-dom/client';
 
-
-export const description = "A donut chart with text"
-const chartData = [
-    { browser: "chrome", visitors: 275, fill: "var(--color-chrome)" },
-    { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
-    { browser: "firefox", visitors: 287, fill: "var(--color-firefox)" },
-    { browser: "edge", visitors: 173, fill: "var(--color-edge)" },
-    { browser: "other", visitors: 190, fill: "var(--color-other)" },
-]
-const chartConfig = {
-    visitors: {
-        label: "Visitors",
-    },
-    chrome: {
-        label: "Chrome",
-        color: "var(--chart-1)",
-    },
-    safari: {
-        label: "Safari",
-        color: "var(--chart-2)",
-    },
-    firefox: {
-        label: "Firefox",
-        color: "var(--chart-3)",
-    },
-    edge: {
-        label: "Edge",
-        color: "var(--chart-4)",
-    },
-    other: {
-        label: "Other",
-        color: "var(--chart-5)",
-    },
-} satisfies ChartConfig
 
 export default function Page() {
-
-    const totalVisitors = React.useMemo(() => {
-        return chartData.reduce((acc, curr) => acc + curr.visitors, 0)
-    }, [])
-
-    const chartRefs = useRef<{ [key: string]: HTMLDivElement | null }>({});
 
     const { performanceEngineer } = useFetchPerformanceEngineer()
 
     const [selectedEngineer, setSelectedEngineer] = useState<string>('all');
-    const chartRef = useRef<HTMLDivElement>(null);
-
-    // const performanceEngineer = [
-    //     { id: 'john', name: 'John Smith', resolved: 45, avgTime: '2.1h', efficiency: 92, assigned: 50 },
-    //     { id: 'sarah', name: 'Sarah Johnson', resolved: 38, avgTime: '1.8h', efficiency: 95, assigned: 40 },
-    //     { id: 'mike', name: 'Mike Davis', resolved: 41, avgTime: '2.4h', efficiency: 88, assigned: 47 },
-    //     { id: 'lisa', name: 'Lisa Chen', resolved: 52, avgTime: '1.5h', efficiency: 98, assigned: 53 },
-    //     { id: 'tom', name: 'Tom Wilson', resolved: 35, avgTime: '2.8h', efficiency: 85, assigned: 42 },
-    // ];
 
     const getEfficiencyColor = (efficiency: number) => {
-        if (efficiency >= 95) return 'bg-green-100 text-green-800';
-        if (efficiency >= 90) return 'bg-blue-100 text-blue-800';
-        if (efficiency >= 85) return 'bg-yellow-100 text-yellow-800';
-        return 'bg-red-100 text-red-800';
+        if (efficiency >= 95) {
+            return 'bg-[#dcfce7] text-[#166534]'; // Tailwind: green-100, green-800
+        }
+        if (efficiency >= 90) {
+            return 'bg-[#dbeafe] text-[#1e40af]'; // Tailwind: blue-100, blue-800
+        }
+        if (efficiency >= 85) {
+            return 'bg-[#fef9c3] text-[#854d0e]'; // Tailwind: yellow-100, yellow-800
+        }
+        return 'bg-[#fee2e2] text-[#991b1b]';    // Tailwind: red-100, red-800
     };
 
     // Function to get engineer's chart data
@@ -99,7 +55,7 @@ export default function Page() {
     const CustomTooltip = ({ active, payload }: any) => {
         if (active && payload && payload.length) {
             return (
-                <div className="bg-white p-3 border rounded-lg shadow-lg">
+                <div className="bg-[#fff] p-3 border rounded-lg shadow-lg">
                     <p className="font-medium">{`${payload[0].name}: ${payload[0].value}${payload[0].name.includes('Time') ? 'h' : payload[0].name.includes('Performance') ? '%' : ''}`}</p>
                 </div>
             );
@@ -107,49 +63,26 @@ export default function Page() {
         return null;
     };
 
-    const captureEngineerChart = async (engineer) => {
-        return new Promise(async (resolve) => {
-            const container = document.createElement("div");
-            container.style.position = "absolute";
-            container.style.left = "-9999px";
-            container.style.top = "-9999px";
-            document.body.appendChild(container);
+    const captureEngineerCharts = async (engineerId: string) => {
+        const engineerChartsElement = document.getElementById(`engineer-charts-${engineerId}`);
+        if (engineerChartsElement) {
+            // Tambahkan delay agar chart benar-benar selesai render
+            await new Promise((res) => setTimeout(res, 1000));
 
-            const root = ReactDOM.createRoot(container);
-            root.render(
-                <div style={{ display: 'flex', gap: 24, background: '#fff', padding: 12 }}>
-                    {[getEngineerChartData(engineer).resolvedData, getEngineerChartData(engineer).avgTimeData, getEngineerChartData(engineer).performanceData].map((data, i) => (
-                        <div style={{ width: 100, height: 100 }} key={i}>
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie
-                                        data={data}
-                                        dataKey="value"
-                                        innerRadius={30}
-                                        outerRadius={45}
-                                        startAngle={90}
-                                        endAngle={-270}
-                                    >
-                                        {data.map((entry, idx) => (
-                                            <Cell key={idx} fill={entry.color} />
-                                        ))}
-                                    </Pie>
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-                    ))}
-                </div>
-            );
-
-            await new Promise((r) => setTimeout(r, 300));
-            const canvas = await html2canvas(container);
-            const img = canvas.toDataURL("image/png");
-
-            root.unmount();
-            container.remove();
-
-            resolve(img);
-        });
+            try {
+                const canvas = await html2canvas(engineerChartsElement, {
+                    backgroundColor: 'white',
+                    scale: 2, // agar lebih tajam
+                    useCORS: true,
+                    scrollY: -window.scrollY,
+                });
+                return canvas.toDataURL('image/png');
+            } catch (error) {
+                console.log('Could not capture engineer charts:', error);
+                return null;
+            }
+        }
+        return null;
     };
 
     const generatePDF = async () => {
@@ -176,10 +109,14 @@ export default function Page() {
             for (let index = 0; index < performanceEngineer.length; index++) {
                 const engineer = performanceEngineer[index];
 
-                if (yPosition > 250) {
+                // Check if we need a new page
+                if (yPosition > 200) {
                     doc.addPage();
                     yPosition = 30;
                 }
+
+                // Capture engineer charts
+                const chartImage = await captureEngineerCharts(engineer.id);
 
                 doc.setFontSize(12);
                 doc.setFont('helvetica', 'bold');
@@ -187,31 +124,21 @@ export default function Page() {
 
                 doc.setFont('helvetica', 'normal');
                 doc.text(`   Total Tiket Assigned: ${engineer.assigned}`, 20, yPosition + 15);
-                doc.text(`   Total Tiket Solved: ${engineer.resolved}`, 20, yPosition + 30);
-                doc.text(`   Average Resolution Time: ${engineer.avgTime}`, 20, yPosition + 45);
-                doc.text(`   Performance: ${engineer.efficiency}%`, 20, yPosition + 60);
+                doc.text(`   Total Tiket Solved: ${engineer.resolved}`, 20, yPosition + 25);
+                doc.text(`   Average Resolution Time: ${engineer.avgTime}`, 20, yPosition + 35);
+                doc.text(`   Performance: ${engineer.efficiency}%`, 20, yPosition + 45);
 
+                // Add resolution rate calculation
                 const resolutionRate = ((engineer.resolved / engineer.assigned) * 100).toFixed(1);
-                doc.text(`   Resolution Rate: ${resolutionRate}%`, 20, yPosition + 75);
+                doc.text(`   Resolution Rate: ${resolutionRate}%`, 20, yPosition + 55);
 
-                const chartElement = chartRefs.current[engineer.id];
-                if (chartElement) {
-                    // Simpan warna lama & override background
-                    const originalBg = chartElement.style.backgroundColor;
-                    chartElement.style.backgroundColor = '#fff'; // fallback aman
-
-                    const canvas = await html2canvas(chartElement, {
-                        backgroundColor: '#ffffff',
-                        scale: 1,
-                        useCORS: true,
-                    });
-
-                    chartElement.style.backgroundColor = originalBg; // restore
-                    const chartImage = canvas.toDataURL('image/png');
-                    doc.addImage(chartImage, 'PNG', 100, yPosition, 90, 50);
+                // Add chart if captured
+                if (chartImage) {
+                    doc.addImage(chartImage, 'PNG', 20, yPosition + 65, 150, 40);
+                    yPosition += 150;
+                } else {
+                    yPosition += 95;
                 }
-
-                yPosition += 95;
             }
 
             // Summary
@@ -243,10 +170,10 @@ export default function Page() {
 
             doc.setFontSize(12);
             doc.setFont('helvetica', 'normal');
-            doc.text(`Total Tiket Assigned: ${engineer.assigned}`, 20, 90);
-            doc.text(`Total Tiket Solved: ${engineer.resolved}`, 20, 110);
-            doc.text(`Average Resolution Time: ${engineer.avgTime}`, 20, 130);
-            doc.text(`Performance Score: ${engineer.efficiency}%`, 20, 150);
+            doc.text(`Total Tiket Assigned: ${engineer.assigned}`, 20, 85);
+            doc.text(`Total Tiket Solved: ${engineer.resolved}`, 20, 95);
+            doc.text(`Average Resolution Time: ${engineer.avgTime}`, 20, 105);
+            doc.text(`Performance Score: ${engineer.efficiency}%`, 20, 115);
 
             // Performance rating
             let rating = '';
@@ -255,18 +182,24 @@ export default function Page() {
             else if (engineer.efficiency >= 85) rating = 'Good';
             else rating = 'Needs Improvement';
 
-            doc.text(`Performance Rating: ${rating}`, 20, 170);
+            doc.text(`Performance Rating: ${rating}`, 20, 125);
 
             // Resolution rate
             const resolutionRate = ((engineer.resolved / engineer.assigned) * 100).toFixed(1);
-            doc.text(`Resolution Rate: ${resolutionRate}%`, 20, 190);
+            doc.text(`Resolution Rate: ${resolutionRate}%`, 20, 135);
+
+            // Capture and add engineer charts
+            const chartImage = await captureEngineerCharts(engineer.id);
+            if (chartImage) {
+                doc.addImage(chartImage, 'PNG', 20, 145, 150, 40);
+            }
 
             // Add chart visualization description
             doc.setFont('helvetica', 'bold');
-            doc.text('Performance Breakdown:', 20, 220);
+            doc.text('Performance Breakdown:', 20, 200);
             doc.setFont('helvetica', 'normal');
-            doc.text(`- Tickets Solved: ${engineer.resolved} (${resolutionRate}%)`, 20, 235);
-            doc.text(`- Tickets Remaining: ${engineer.assigned - engineer.resolved} (${(100 - parseFloat(resolutionRate)).toFixed(1)}%)`, 20, 250);
+            doc.text(`- Tickets Solved: ${engineer.resolved} (${resolutionRate}%)`, 20, 210);
+            doc.text(`- Tickets Remaining: ${engineer.assigned - engineer.resolved} (${(100 - parseFloat(resolutionRate)).toFixed(1)}%)`, 20, 220);
         }
 
         // Save PDF
@@ -289,201 +222,6 @@ export default function Page() {
                             <p className="text-gray-600">Track team performance and resolution rate</p>
                         </div>
                     </div>
-
-                    {/* <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                        <Card className="flex flex-col">
-                            <CardHeader className="items-center pb-0">
-                                <CardTitle>Total Ticket Resolved</CardTitle>
-                                <CardDescription>January - June 2024</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex-1 pb-0">
-                                <ChartContainer
-                                    config={chartConfig}
-                                    className="mx-auto aspect-square max-h-[250px]"
-                                >
-                                    <PieChart>
-                                        <ChartTooltip
-                                            cursor={false}
-                                            content={<ChartTooltipContent hideLabel />}
-                                        />
-                                        <Pie
-                                            data={chartData}
-                                            dataKey="visitors"
-                                            nameKey="browser"
-                                            innerRadius={60}
-                                            strokeWidth={5}
-                                        >
-                                            <Label
-                                                content={({ viewBox }) => {
-                                                    if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                                                        return (
-                                                            <text
-                                                                x={viewBox.cx}
-                                                                y={viewBox.cy}
-                                                                textAnchor="middle"
-                                                                dominantBaseline="middle"
-                                                            >
-                                                                <tspan
-                                                                    x={viewBox.cx}
-                                                                    y={viewBox.cy}
-                                                                    className="fill-foreground text-3xl font-bold"
-                                                                >
-                                                                    {totalVisitors.toLocaleString()}
-                                                                </tspan>
-                                                                <tspan
-                                                                    x={viewBox.cx}
-                                                                    y={(viewBox.cy || 0) + 24}
-                                                                    className="fill-muted-foreground"
-                                                                >
-                                                                    Visitors
-                                                                </tspan>
-                                                            </text>
-                                                        )
-                                                    }
-                                                }}
-                                            />
-                                        </Pie>
-                                    </PieChart>
-                                </ChartContainer>
-                            </CardContent>
-                            <CardFooter className="flex-col gap-2 text-sm">
-                                <div className="flex items-center gap-2 leading-none font-medium">
-                                    Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-                                </div>
-                                <div className="text-muted-foreground leading-none">
-                                    Showing total visitors for the last 6 months
-                                </div>
-                            </CardFooter>
-                        </Card>
-                        <Card className="flex flex-col">
-                            <CardHeader className="items-center pb-0">
-                                <CardTitle>Avg Resolution Time</CardTitle>
-                                <CardDescription>January - June 2024</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex-1 pb-0">
-                                <ChartContainer
-                                    config={chartConfig}
-                                    className="mx-auto aspect-square max-h-[250px]"
-                                >
-                                    <PieChart>
-                                        <ChartTooltip
-                                            cursor={false}
-                                            content={<ChartTooltipContent hideLabel />}
-                                        />
-                                        <Pie
-                                            data={chartData}
-                                            dataKey="visitors"
-                                            nameKey="browser"
-                                            innerRadius={60}
-                                            strokeWidth={5}
-                                        >
-                                            <Label
-                                                content={({ viewBox }) => {
-                                                    if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                                                        return (
-                                                            <text
-                                                                x={viewBox.cx}
-                                                                y={viewBox.cy}
-                                                                textAnchor="middle"
-                                                                dominantBaseline="middle"
-                                                            >
-                                                                <tspan
-                                                                    x={viewBox.cx}
-                                                                    y={viewBox.cy}
-                                                                    className="fill-foreground text-3xl font-bold"
-                                                                >
-                                                                    {totalVisitors.toLocaleString()}
-                                                                </tspan>
-                                                                <tspan
-                                                                    x={viewBox.cx}
-                                                                    y={(viewBox.cy || 0) + 24}
-                                                                    className="fill-muted-foreground"
-                                                                >
-                                                                    Visitors
-                                                                </tspan>
-                                                            </text>
-                                                        )
-                                                    }
-                                                }}
-                                            />
-                                        </Pie>
-                                    </PieChart>
-                                </ChartContainer>
-                            </CardContent>
-                            <CardFooter className="flex-col gap-2 text-sm">
-                                <div className="flex items-center gap-2 leading-none font-medium">
-                                    Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-                                </div>
-                                <div className="text-muted-foreground leading-none">
-                                    Showing total visitors for the last 6 months
-                                </div>
-                            </CardFooter>
-                        </Card>
-                        <Card className="flex flex-col">
-                            <CardHeader className="items-center pb-0">
-                                <CardTitle>Team Efficiency</CardTitle>
-                                <CardDescription>January - June 2024</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex-1 pb-0">
-                                <ChartContainer
-                                    config={chartConfig}
-                                    className="mx-auto aspect-square max-h-[250px]"
-                                >
-                                    <PieChart>
-                                        <ChartTooltip
-                                            cursor={false}
-                                            content={<ChartTooltipContent hideLabel />}
-                                        />
-                                        <Pie
-                                            data={chartData}
-                                            dataKey="visitors"
-                                            nameKey="browser"
-                                            innerRadius={60}
-                                            strokeWidth={5}
-                                        >
-                                            <Label
-                                                content={({ viewBox }) => {
-                                                    if (viewBox && "cx" in viewBox && "cy" in viewBox) {
-                                                        return (
-                                                            <text
-                                                                x={viewBox.cx}
-                                                                y={viewBox.cy}
-                                                                textAnchor="middle"
-                                                                dominantBaseline="middle"
-                                                            >
-                                                                <tspan
-                                                                    x={viewBox.cx}
-                                                                    y={viewBox.cy}
-                                                                    className="fill-foreground text-3xl font-bold"
-                                                                >
-                                                                    {totalVisitors.toLocaleString()}
-                                                                </tspan>
-                                                                <tspan
-                                                                    x={viewBox.cx}
-                                                                    y={(viewBox.cy || 0) + 24}
-                                                                    className="fill-muted-foreground"
-                                                                >
-                                                                    Visitors
-                                                                </tspan>
-                                                            </text>
-                                                        )
-                                                    }
-                                                }}
-                                            />
-                                        </Pie>
-                                    </PieChart>
-                                </ChartContainer>
-                            </CardContent>
-                            <CardFooter className="flex-col gap-2 text-sm">
-                                <div className="flex items-center gap-2 leading-none font-medium">
-                                    Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-                                </div>
-                                <div className="text-muted-foreground leading-none">
-                                    Showing total visitors for the last 6 months
-                                </div>
-                            </CardFooter>
-                        </Card>
-                    </div> */}
 
                     {/* Export Section */}
                     <Card>
@@ -517,6 +255,16 @@ export default function Page() {
                                     <Download className="h-4 w-4" />
                                     Export PDF
                                 </Button>
+                                {/* <Button
+                                    onClick={async () => {
+                                        const img = await captureEngineerCharts(performanceEngineer[0]?.id);
+                                        console.log("img base64:", img);
+                                        const w = window.open();
+                                        if (w && img) w.document.write(`<img src="${img}" />`);
+                                    }}
+                                >
+                                    Debug Capture
+                                </Button> */}
                             </div>
                         </CardContent>
                     </Card>
@@ -532,11 +280,12 @@ export default function Page() {
                                     const { resolvedData, avgTimeData, performanceData } = getEngineerChartData(engineer);
 
                                     return (
-                                        <div key={index} ref={(el) => (chartRefs.current[engineer.id] = el)} className="p-6 bg-gray-50 rounded-lg">
+                                        <div key={index} className="p-6 bg-[#f9fafb] rounded-lg"
+                                        >
                                             <div className="flex items-center justify-between mb-4">
                                                 <div>
                                                     <div className="font-medium text-lg">{engineer.name}</div>
-                                                    <div className="text-sm text-gray-500">
+                                                    <div className="text-sm text-[#6a7282]">
                                                         Assigned: {engineer.assigned} | Resolved: {engineer.resolved} | Resolution Rate: {((engineer.resolved / engineer.assigned) * 100).toFixed(1)}%
                                                     </div>
                                                 </div>
@@ -545,31 +294,31 @@ export default function Page() {
                                                 </Badge>
                                             </div>
 
-                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <div id={`engineer-charts-${engineer.id}`} className="grid grid-cols-1 md:grid-cols-3 gap-4 min-h-[200px]">
                                                 {/* Ticket Resolution Chart */}
                                                 <div className="text-center">
                                                     <h4 className="text-sm font-medium mb-2">Ticket Resolution</h4>
                                                     <ChartContainer config={{}} className="h-[150px]">
-                                                        <ResponsiveContainer width="100%" height="100%">
-                                                            <PieChart>
-                                                                <Pie
-                                                                    data={resolvedData}
-                                                                    cx="50%"
-                                                                    cy="50%"
-                                                                    innerRadius={40}
-                                                                    outerRadius={60}
-                                                                    paddingAngle={5}
-                                                                    dataKey="value"
-                                                                >
-                                                                    {resolvedData.map((entry, idx) => (
-                                                                        <Cell key={`cell-${idx}`} fill={entry.color} />
-                                                                    ))}
-                                                                </Pie>
-                                                                <ChartTooltip content={<CustomTooltip />} />
-                                                            </PieChart>
-                                                        </ResponsiveContainer>
+                                                        {/* <ResponsiveContainer width="100%" height="100%"> */}
+                                                        <PieChart width={180} height={180}>
+                                                            <Pie
+                                                                data={resolvedData}
+                                                                cx="50%"
+                                                                cy="50%"
+                                                                innerRadius={40}
+                                                                outerRadius={60}
+                                                                paddingAngle={5}
+                                                                dataKey="value"
+                                                            >
+                                                                {resolvedData.map((entry, idx) => (
+                                                                    <Cell key={`cell-${idx}`} fill={entry.color} />
+                                                                ))}
+                                                            </Pie>
+                                                            <ChartTooltip content={<CustomTooltip />} />
+                                                        </PieChart>
+                                                        {/* </ResponsiveContainer> */}
                                                     </ChartContainer>
-                                                    <div className="text-xs text-gray-600">
+                                                    <div className="text-xs text-[#4a5565]">
                                                         {engineer.resolved}/{engineer.assigned} tickets
                                                     </div>
                                                 </div>
@@ -578,27 +327,28 @@ export default function Page() {
                                                 <div className="text-center">
                                                     <h4 className="text-sm font-medium mb-2">Avg Resolution Time</h4>
                                                     <ChartContainer config={{}} className="h-[150px]">
-                                                        <ResponsiveContainer width="100%" height="100%">
-                                                            <PieChart>
-                                                                <Pie
-                                                                    data={avgTimeData}
-                                                                    cx="50%"
-                                                                    cy="50%"
-                                                                    innerRadius={40}
-                                                                    outerRadius={60}
-                                                                    paddingAngle={5}
-                                                                    dataKey="value"
-                                                                >
-                                                                    {avgTimeData.map((entry, idx) => (
-                                                                        <Cell key={`cell-${idx}`} fill={entry.color} />
-                                                                    ))}
-                                                                </Pie>
-                                                                <ChartTooltip content={<CustomTooltip />} />
-                                                            </PieChart>
-                                                        </ResponsiveContainer>
+                                                        {/* <ResponsiveContainer width="100%" height="100%"> */}
+                                                        <PieChart width={180} height={180}>
+                                                            <Pie
+                                                                data={avgTimeData}
+                                                                cx="50%"
+                                                                cy="50%"
+                                                                innerRadius={40}
+                                                                outerRadius={60}
+                                                                paddingAngle={5}
+                                                                dataKey="value"
+                                                            >
+                                                                {avgTimeData.map((entry, idx) => (
+                                                                    <Cell key={`cell-${idx}`} fill={entry.color} />
+                                                                ))}
+                                                            </Pie>
+                                                            <ChartTooltip content={<CustomTooltip />} />
+                                                        </PieChart>
+                                                        {/* </ResponsiveContainer> */}
                                                     </ChartContainer>
-                                                    <div className="text-xs text-gray-600">
-                                                        {engineer.avgTime} (Target: ≤4h)
+                                                    <div className="text-xs text-[#4a5565]">
+                                                        {engineer.avgTime}
+                                                        {/* (Target: ≤4h) */}
                                                     </div>
                                                 </div>
 
@@ -606,26 +356,26 @@ export default function Page() {
                                                 <div className="text-center">
                                                     <h4 className="text-sm font-medium mb-2">Performance Score</h4>
                                                     <ChartContainer config={{}} className="h-[150px]">
-                                                        <ResponsiveContainer width="100%" height="100%">
-                                                            <PieChart>
-                                                                <Pie
-                                                                    data={performanceData}
-                                                                    cx="50%"
-                                                                    cy="50%"
-                                                                    innerRadius={40}
-                                                                    outerRadius={60}
-                                                                    paddingAngle={5}
-                                                                    dataKey="value"
-                                                                >
-                                                                    {performanceData.map((entry, idx) => (
-                                                                        <Cell key={`cell-${idx}`} fill={entry.color} />
-                                                                    ))}
-                                                                </Pie>
-                                                                <ChartTooltip content={<CustomTooltip />} />
-                                                            </PieChart>
-                                                        </ResponsiveContainer>
+                                                        {/* <ResponsiveContainer width="100%" height="100%"> */}
+                                                        <PieChart width={180} height={180}>
+                                                            <Pie
+                                                                data={performanceData}
+                                                                cx="50%"
+                                                                cy="50%"
+                                                                innerRadius={40}
+                                                                outerRadius={60}
+                                                                paddingAngle={5}
+                                                                dataKey="value"
+                                                            >
+                                                                {performanceData.map((entry, idx) => (
+                                                                    <Cell key={`cell-${idx}`} fill={entry.color} />
+                                                                ))}
+                                                            </Pie>
+                                                            <ChartTooltip content={<CustomTooltip />} />
+                                                        </PieChart>
+                                                        {/* </ResponsiveContainer> */}
                                                     </ChartContainer>
-                                                    <div className="text-xs text-gray-600">
+                                                    <div className="text-xs text-[#4a5565]">
                                                         {engineer.efficiency}% efficiency
                                                     </div>
                                                 </div>

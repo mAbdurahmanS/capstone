@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Ticket } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
+import { useFetchUsers } from "@/hooks/useFetchUsers"
 
 const data = {
   user: {
@@ -82,7 +83,9 @@ const data = {
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
-  const { user, isAdmin } = useAuth()
+  const { user: userAuth, isAdmin } = useAuth()
+
+  const { users: user, mutate } = useFetchUsers(userAuth?.id)
 
   if (!user) return null // atau loader
 
@@ -110,7 +113,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavMain items={data.navMain.filter(item => !item.onlyAdmin || isAdmin)} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={user} />
+        <NavUser user={user} mutate={mutate} />
       </SidebarFooter>
     </Sidebar>
   )

@@ -7,7 +7,7 @@ export async function GET() {
   try {
     const rows = await sql`
       SELECT 
-        u.id, u.name, u.email, u.role_id, u.department_id, u.company
+        u.id, u.name, u.email, u.role_id, u.department_id, u.company,
         r.name AS role,
         d.name AS department
       FROM users u

@@ -15,13 +15,21 @@ import {
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { useRouter } from 'next/navigation';
+import { useFetchUsers } from '@/hooks/useFetchUsers';
+import { IconUserCircle } from '@tabler/icons-react';
+import DialogEditUser from '@/components/user/user-edit';
 
 export default function Page() {
     const router = useRouter()
 
     const [activeTab, setActiveTab] = useState('my-tickets');
     const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
-    const { user } = useAuth()
+
+    const { user: userAuth } = useAuth()
+
+    const { users: user, mutate } = useFetchUsers(userAuth?.id)
+
+    const [openEdit, setOpenEdit] = useState(false);
 
     const handleTicketReply = (ticketId: number) => {
         setSelectedTicketId(ticketId);
@@ -89,11 +97,19 @@ export default function Page() {
                                         <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center">
                                             <User className="h-4 w-4 text-white" />
                                         </div>
-                                        <span className="hidden md:block font-medium">{user?.name}</span>
+                                        <div className="flex flex-col text-start">
+                                            <span className="hidden md:block font-medium truncate">{user?.name}</span>
+                                            <span className="hidden md:block text-muted-foreground truncate text-xs">{user?.email}</span>
+                                        </div>
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-56 bg-white/95 backdrop-blur-xl border border-gray-200/50">
                                     <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem className="hover:bg-red-50/50" onClick={() => setOpenEdit(true)}>
+                                        <IconUserCircle className="mr-2 h-4 w-4" />
+                                        Edit Account
+                                    </DropdownMenuItem>
                                     <DropdownMenuSeparator />
                                     <DropdownMenuItem className="text-red-600 hover:bg-red-50/50" onClick={handleLogout}>
                                         <LogOut className="mr-2 h-4 w-4 text-red-600" />
@@ -105,6 +121,8 @@ export default function Page() {
                     </div>
                 </div>
             </header>
+
+            <DialogEditUser open={openEdit} setOpen={setOpenEdit} user={user} mutate={mutate} />
 
             {/* Navigation */}
             <nav className="bg-white border-b">

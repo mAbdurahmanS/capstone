@@ -64,41 +64,68 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
-    const { title, description, priority_id, customer_id, engineer_id } = data;
+    const {
+      title,
+      description,
+      priority_id,
+      customer_id,
+      engineer_id,
+      category_id,
+      images, // 👈 new
+    } = data;
 
-    // ✅ Validasi satu per satu
-    if (!title) {
+    // Validasi
+    if (!title)
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
-    }
-
-    if (!description) {
+    if (!category_id)
+      return NextResponse.json(
+        { error: "Category is required" },
+        { status: 400 }
+      );
+    if (!description)
       return NextResponse.json(
         { error: "Description is required" },
         { status: 400 }
       );
-    }
-
-    if (!customer_id) {
+    if (!customer_id)
       return NextResponse.json(
         { error: "Customer ID is required" },
         { status: 400 }
       );
+
+    // Enkripsi deskripsi
+    const encryptedDescription = encrypt(description);
+    const categoryId = Number(category_id);
+    if (isNaN(categoryId)) {
+      return NextResponse.json(
+        { error: "Invalid category_id" },
+        { status: 400 }
+      );
     }
 
-    // 🔐 Enkripsi description
-    const encryptedDescription = encrypt(description);
-
-    await sql`
+    // Simpan ticket
+    const result = await sql`
       INSERT INTO tickets (
-        title, description, priority_id, customer_id, engineer_id
+        title, description, priority_id, customer_id, engineer_id, category_id
       ) VALUES (
         ${title}, ${encryptedDescription}, ${
       priority_id ?? null
-    }, ${customer_id}, ${engineer_id ?? null}
+    }, ${customer_id}, ${engineer_id ?? null}, ${categoryId}
       )
+      RETURNING id
     `;
 
-    return NextResponse.json({ message: "Ticket created" });
+    const ticketId = result[0]?.id;
+
+    // Simpan gambar-gambar jika ada
+    for (const imgUrl of images) {
+      await sql`
+        INSERT INTO images (image, ticket_id)
+        VALUES (${imgUrl}, ${ticketId})
+      `;
+    }
+
+    return NextResponse.json({ message: "Ticket created", ticketId });
   } catch (err) {
     console.error("🔥 ERROR POST /api/tickets:", err);
     return NextResponse.json(

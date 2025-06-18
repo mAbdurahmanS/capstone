@@ -8,6 +8,7 @@ import {
   SidebarProvider,
 } from "@/components/ui/sidebar"
 import { SiteHeader } from "@/components/site-header";
+import { Toaster } from "@/components/ui/sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -46,6 +47,7 @@ export default function RootLayout({
           <SidebarInset>
             <SiteHeader />
             {children}
+            <Toaster />
           </SidebarInset>
         </SidebarProvider>
       </body>

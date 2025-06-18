@@ -1,6 +1,6 @@
 import sql from "@/lib/data";
 import { NextRequest, NextResponse } from "next/server";
-import { decrypt, encrypt } from "@/lib/encrypt";
+import { encrypt } from "@/lib/encrypt";
 
 // 📄 Get all data
 // export async function GET() {
@@ -34,7 +34,7 @@ import { decrypt, encrypt } from "@/lib/encrypt";
 export async function POST(req: NextRequest) {
   try {
     const data = await req.json();
-    const { note, ticket_id, user_id } = data;
+    const { note, ticket_id, user_id, images } = data;
 
     // ✅ Validasi satu per satu
     if (!note) {
@@ -58,13 +58,24 @@ export async function POST(req: NextRequest) {
     // 🔐 Enkripsi note
     const encryptedNote = encrypt(note);
 
-    await sql`
+    const result = await sql`
       INSERT INTO progress_logs (
         note, ticket_id, user_id
       ) VALUES (
         ${encryptedNote}, ${ticket_id}, ${user_id}
       )
+      RETURNING id
     `;
+
+    const logId = result[0]?.id;
+
+    // Simpan gambar-gambar jika ada
+    for (const imgUrl of images) {
+      await sql`
+            INSERT INTO images (image, progress_log_id)
+            VALUES (${imgUrl}, ${logId})
+          `;
+    }
 
     return NextResponse.json({ message: "Note created" });
   } catch (err) {

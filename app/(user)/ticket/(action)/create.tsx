@@ -9,9 +9,18 @@ import {
     DialogTitle,
     DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+    Select,
+    SelectContent,
+    SelectGroup,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { useFetchCategories } from "@/hooks/useFetchCategories"
 import { IconPlus } from "@tabler/icons-react"
 import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
@@ -19,11 +28,13 @@ import { toast } from "sonner"
 export default function DialogCreate({ mutateTickets, userId }: { mutateTickets: () => void, userId: number }) {
 
     const closeRef = useRef<HTMLButtonElement>(null);
+    const { categories } = useFetchCategories()
 
     const [formData, setFormData] = useState({
         title: "",
         description: "",
-        customer_id: userId
+        customer_id: userId,
+        category_id: "",
     })
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -32,6 +43,13 @@ export default function DialogCreate({ mutateTickets, userId }: { mutateTickets:
             [e.target.name]: e.target.value,
         })
     }
+
+    const handleCategoryChange = (value: string) => {
+        setFormData((prev) => ({
+            ...prev,
+            category_id: value,
+        }));
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -50,6 +68,7 @@ export default function DialogCreate({ mutateTickets, userId }: { mutateTickets:
                     title: "",
                     description: "",
                     customer_id: userId,
+                    category_id: "",
                 })
                 mutateTickets()
             } else {
@@ -89,6 +108,23 @@ export default function DialogCreate({ mutateTickets, userId }: { mutateTickets:
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-6">
+                        <div className="grid gap-3">
+                            <Label htmlFor="category">Category</Label>
+                            <Select value={formData.category_id} onValueChange={handleCategoryChange}>
+                                <SelectTrigger className="w-full">
+                                    <SelectValue placeholder="Select category" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectGroup>
+                                        {categories.map((cat: any) => (
+                                            <SelectItem key={cat.id} value={String(cat.id)}>
+                                                {cat.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectGroup>
+                                </SelectContent>
+                            </Select>
+                        </div>
                         <div className="grid gap-3">
                             <Label htmlFor="title">Title</Label>
                             <Input

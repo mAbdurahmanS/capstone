@@ -8,16 +8,27 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
-import { IconSearch, IconUser } from "@tabler/icons-react"
+import { IconBuildings, IconEdit, IconSearch, IconTrash, IconUser } from "@tabler/icons-react"
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
-import { useRouter } from "next/navigation"
-import DialogCreate from "./(action)/create"
 import { useFetchUsers } from "@/hooks/useFetchUsers"
 import { useAuth } from "@/hooks/useAuth"
+import { Button } from "@/components/ui/button"
+import DialogUserForm from "@/components/user/user-form"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
 
 export default function Page() {
-  const router = useRouter();
 
   const { users, mutate: mutateUsers } = useFetchUsers(null, 1)
 
@@ -32,18 +43,32 @@ export default function Page() {
       : 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
-  const getPerformanceColor = (performance: number) => {
-    if (performance >= 90) return 'text-green-600';
-    if (performance >= 80) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
   const filteredUsers = users.filter(user => {
     const matchesRole = filterRole === 'all' || user.role === filterRole;
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesRole && matchesSearch;
   });
+
+  const handleDelete = async (userId: number) => {
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        toast.success("User deleted successfully");
+        mutateUsers();
+      } else {
+        const err = await res.json();
+        toast.error("Failed to delete data: " + err.message || "Unknown error");
+      }
+    } catch (error) {
+      console.error("🔥 Delete error:", error);
+      toast.error("Server error while deleting data");
+    }
+  };
+
 
   return (
     <div className="flex flex-1 flex-col">
@@ -77,7 +102,7 @@ export default function Page() {
                         />
                       </div>
                     </div>
-                    {isAdmin && <DialogCreate mutateUsers={mutateUsers} />}
+                    {isAdmin && <DialogUserForm mutateUsers={mutateUsers} roleId={1} />}
                   </div>
                 </CardContent>
               </Card>
@@ -107,9 +132,34 @@ export default function Page() {
                               <span>{user.department}</span>
                             </div> */}
                             <div className="flex items-center gap-1">
+                              <IconBuildings className="h-4 w-4" />
+                              <span>{user?.company ?? "Tokopedia"}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
                               <span>Joined: {new Date(user.created_at).toLocaleDateString()}</span>
                             </div>
                           </div>
+                        </div>
+                        <div className="flex gap-2">
+                          {isAdmin && <DialogUserForm mutateUsers={mutateUsers} roleId={1} mode="edit" initialData={user} />}
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline"><IconTrash className="h-4 w-4" /> Delete</Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete your
+                                  data and remove your data from our servers.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(user?.id)}>Delete</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </div>
                       </div>
                     </CardContent>

@@ -14,7 +14,6 @@ import {
     SelectContent,
     SelectGroup,
     SelectItem,
-    SelectLabel,
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
@@ -25,18 +24,22 @@ import { IconPlus } from "@tabler/icons-react"
 import { useRef, useState } from "react"
 import { toast } from "sonner"
 import { useAuth } from "@/hooks/useAuth"
+import { useFetchCategories } from "@/hooks/useFetchCategories"
 
 export default function DialogCreate({ mutateTickets }: { mutateTickets: () => void }) {
 
     const closeRef = useRef<HTMLButtonElement>(null);
 
     const { user } = useAuth()
+    const { categories } = useFetchCategories()
 
     const [formData, setFormData] = useState({
         title: "",
         description: "",
-        customer_id: user?.id
+        customer_id: user?.id,
+        category_id: "",
     })
+    const [images, setImages] = useState<File[]>([]);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({
@@ -45,34 +48,63 @@ export default function DialogCreate({ mutateTickets }: { mutateTickets: () => v
         })
     }
 
+    const handleCategoryChange = (value: string) => {
+        setFormData((prev) => ({
+            ...prev,
+            category_id: value,
+        }));
+    };
+
+
     const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
+        e.preventDefault();
 
         try {
+            // 1. Upload images ke /api/upload
+            let imageUrls: string[] = [];
+            if (images.length > 0) {
+                const imageForm = new FormData();
+                images.forEach((img) => imageForm.append("images", img));
+                const imgRes = await fetch("/api/upload", {
+                    method: "POST",
+                    body: imageForm,
+                });
+
+                if (!imgRes.ok) throw new Error("Image upload failed");
+                const imgData = await imgRes.json();
+                imageUrls = imgData.urls;
+            }
+
+            // 2. Submit ticket
             const res = await fetch("/api/tickets", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
-            })
+                body: JSON.stringify({
+                    ...formData,
+                    images: imageUrls, // array of URL string
+                }),
+            });
 
             if (res.ok) {
-                toast.success("Ticket created successfully")
+                toast.success("Ticket created successfully");
                 closeRef.current?.click();
                 setFormData({
                     title: "",
                     description: "",
                     customer_id: user?.id,
-                })
-                mutateTickets()
+                    category_id: "",
+                });
+                setImages([]);
+                mutateTickets();
             } else {
-                const err = await res.json()
-                toast.error("Error: " + err.message || "Failed to create ticket")
+                const err = await res.json();
+                toast.error("Error: " + err.message || "Failed to create ticket");
             }
         } catch (err) {
-            console.error("🔥 Error creating ticket:", err)
-            toast.error("Server error")
+            console.error("🔥 Error creating ticket:", err);
+            toast.error("Server error");
         }
-    }
+    };
 
     return (
         <Dialog>
@@ -92,19 +124,32 @@ export default function DialogCreate({ mutateTickets }: { mutateTickets: () => v
                     </DialogHeader>
                     <div className="grid gap-4 py-6">
                         <div className="grid gap-3">
+                            <Label htmlFor="images">Upload Images</Label>
+                            <Input
+                                id="images"
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                onChange={(e) => {
+                                    if (e.target.files) {
+                                        setImages(Array.from(e.target.files));
+                                    }
+                                }}
+                            />
+                        </div>
+                        <div className="grid gap-3">
                             <Label htmlFor="category">Category</Label>
-                            <Select>
+                            <Select value={formData.category_id} onValueChange={handleCategoryChange}>
                                 <SelectTrigger className="w-full">
                                     <SelectValue placeholder="Select category" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
-                                        <SelectLabel>Category</SelectLabel>
-                                        <SelectItem value="apple">Apple</SelectItem>
-                                        <SelectItem value="banana">Banana</SelectItem>
-                                        <SelectItem value="blueberry">Blueberry</SelectItem>
-                                        <SelectItem value="grapes">Grapes</SelectItem>
-                                        <SelectItem value="pineapple">Pineapple</SelectItem>
+                                        {categories.map((cat: any) => (
+                                            <SelectItem key={cat.id} value={String(cat.id)}>
+                                                {cat.name}
+                                            </SelectItem>
+                                        ))}
                                     </SelectGroup>
                                 </SelectContent>
                             </Select>
@@ -134,7 +179,7 @@ export default function DialogCreate({ mutateTickets }: { mutateTickets: () => v
                         <DialogClose asChild>
                             <Button ref={closeRef} variant="outline">Cancel</Button>
                         </DialogClose>
-                        <Button type="submit">Save changes</Button>
+                        <Button type="submit">Create</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>

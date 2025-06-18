@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
-import { ArrowLeft, User, Calendar, Tag, AlertTriangle, Send, MessageCircle, Shield, MessageSquare, Clock } from 'lucide-react';
-import { IconAlertTriangle, IconClock, IconUser } from '@tabler/icons-react';
+import { User, Send, Shield, MessageSquare, Clock } from 'lucide-react';
+import { IconClock, IconUser } from '@tabler/icons-react';
 import { useFetchProgressLogs } from '@/hooks/useFetchProgressLogs';
 import { useFetchTickets } from '@/hooks/useFetchTickets';
+import { Input } from '../ui/input';
+import Image from 'next/image';
 
 interface TicketDetailProps {
     ticketId: number;
@@ -15,10 +17,16 @@ interface TicketDetailProps {
 }
 
 export default function TicketDetail({ ticketId, onBack, isUserView = false }: TicketDetailProps) {
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+    const scrollToBottom = () => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    };
+
     const [newMessage, setNewMessage] = useState('');
+    const [isSending, setIsSending] = useState(false);
+    const [images, setImages] = useState<File[]>([]);
 
     const { tickets: ticket } = useFetchTickets(ticketId);
-
     const { progressLogs, mutate: mutateProgressLogs } = useFetchProgressLogs(ticketId);
 
     const getPriorityColor = (priority: string) => {
@@ -43,7 +51,23 @@ export default function TicketDetail({ ticketId, onBack, isUserView = false }: T
     const handleSendMessage = async () => {
         if (!newMessage.trim()) return; // mencegah kirim pesan kosong
 
+        setIsSending(true);
+
         try {
+            let imageUrls: string[] = [];
+            if (images.length > 0) {
+                const imageForm = new FormData();
+                images.forEach((img) => imageForm.append("images", img));
+                const imgRes = await fetch("/api/upload", {
+                    method: "POST",
+                    body: imageForm,
+                });
+
+                if (!imgRes.ok) throw new Error("Image upload failed");
+                const imgData = await imgRes.json();
+                imageUrls = imgData.urls;
+            }
+
             const res = await fetch("/api/progress-logs", {
                 method: "POST",
                 headers: {
@@ -53,6 +77,7 @@ export default function TicketDetail({ ticketId, onBack, isUserView = false }: T
                     note: newMessage,
                     ticket_id: ticketId,  // pastikan ini ada
                     user_id: ticket?.customer?.id,       // pastikan ini ada
+                    images: imageUrls
                 }),
             });
 
@@ -65,18 +90,17 @@ export default function TicketDetail({ ticketId, onBack, isUserView = false }: T
             console.log("Berhasil kirim:", data);
             setNewMessage(""); // reset textarea
             mutateProgressLogs()
-            // 🔁 opsional: panggil mutate / refetch untuk refresh log terbaru
+            setImages([]);
         } catch (error) {
             console.error("Error mengirim pesan:", error);
+        } finally {
+            setIsSending(false);
         }
     };
 
-    const handleKeyPress = (e: React.KeyboardEvent) => {
-        if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            handleSendMessage();
-        }
-    };
+    useEffect(() => {
+        scrollToBottom();
+    }, [progressLogs]);
 
     return (
         <div className="max-w-6xl mx-auto space-y-6">
@@ -154,6 +178,19 @@ export default function TicketDetail({ ticketId, onBack, isUserView = false }: T
                                                 {ticket?.customer?.name}
                                             </span>
                                         </div>
+                                        {/* Images */}
+                                        <div className="w-[100%] mb-2">
+                                            {ticket?.image && (
+                                                <Image
+                                                    src={ticket.image}
+                                                    alt={ticket.title}
+                                                    layout="responsive"
+                                                    width={16}
+                                                    height={9}
+                                                    className="rounded-lg object-contain border"
+                                                />
+                                            )}
+                                        </div>
                                         <p className="text-sm leading-relaxed mb-3">{ticket?.description}</p>
                                         <div className={`flex items-center gap-1 text-xs text-white/80`}>
                                             <Clock className="h-3 w-3" />
@@ -180,7 +217,7 @@ export default function TicketDetail({ ticketId, onBack, isUserView = false }: T
                                             <div className="flex items-center gap-2 mb-3">
                                                 <div className={`p-1.5 rounded-full ${message.user?.role === 'Engineer' ? 'bg-blue-100' : 'bg-white/20'}`}>
                                                     {message.user?.role === 'Engineer' ? (
-                                                        <Shield className="h-4 w-4 text-white" />
+                                                        <Shield className="h-4 w-4 text-blue-600" />
                                                     ) : (
                                                         <User className={`h-4 w-4 ${message.user?.role === 'Engineer' ? 'text-blue-600' : 'text-white'}`} />
                                                     )}
@@ -188,6 +225,18 @@ export default function TicketDetail({ ticketId, onBack, isUserView = false }: T
                                                 <span className="text-sm font-semibold">
                                                     {message.user?.role === 'Engineer' ? message?.user?.name : `${message?.user?.name} (Engineer)`}
                                                 </span>
+                                            </div>
+                                            <div className="w-[100%] mb-2">
+                                                {message?.image && (
+                                                    <Image
+                                                        src={message.image}
+                                                        alt={message.id}
+                                                        layout="responsive"
+                                                        width={16}
+                                                        height={9}
+                                                        className="rounded-lg object-contain border"
+                                                    />
+                                                )}
                                             </div>
                                             <p className="text-sm leading-relaxed mb-3">{message.note}</p>
                                             <div className={`flex items-center gap-1 text-xs ${message.user?.role === 'Engineer' ? 'text-gray-500' : 'text-white/80'}`}>
@@ -201,23 +250,47 @@ export default function TicketDetail({ ticketId, onBack, isUserView = false }: T
                                     </div>
                                 </div>
                             ))}
+
+                            <div ref={messagesEndRef} />
                         </div>
 
                         {/* Message Input */}
                         <div className="border-t bg-gradient-to-r from-gray-50 to-white p-6">
+                            <Input
+                                id="images"
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                onChange={(e) => {
+                                    if (e.target.files) {
+                                        setImages(Array.from(e.target.files));
+                                    }
+                                }}
+                                className='mb-2'
+                            />
                             <div className="flex gap-4 items-end">
                                 <Textarea
                                     placeholder="Ketik balasan Anda..."
                                     value={newMessage}
                                     onChange={(e) => setNewMessage(e.target.value)}
-                                    onKeyPress={handleKeyPress}
                                     className="flex-1 min-h-[60px] max-h-[120px] resize-none border-0 bg-white shadow-lg rounded-2xl p-4 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
                                 />
                                 <Button
                                     onClick={handleSendMessage}
+                                    disabled={isSending}
                                     className="bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500 hover:from-blue-600 hover:via-purple-600 hover:to-indigo-600  rounded-full transition-all duration-200 text-white font-semibold"
                                 >
-                                    <Send className="h-5 w-5" />
+                                    {isSending ? (
+                                        <div className="flex items-center gap-2">
+                                            <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                                            </svg>
+                                            Sending...
+                                        </div>
+                                    ) : (
+                                        <Send className="h-5 w-5" />
+                                    )}
                                 </Button>
                             </div>
                         </div>

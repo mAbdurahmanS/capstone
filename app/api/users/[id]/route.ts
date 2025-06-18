@@ -52,55 +52,80 @@ export async function GET(
 // 🔄 Update user
 export async function PUT(
   req: NextRequest,
-  { params }: { params: Promise<{ id: number }> }
+  { params }: { params: { id: string } }
 ) {
   try {
     const data = await req.json();
-    const { id } = await params; // wajib await params
-    const { name, email, password, role, department, company } = data;
+    const id = Number(params.id); // pastikan ID angka
 
-    // Cek apakah email sudah dipakai user lain (bukan user dengan id ini)
-    const existingUsers = await sql`
-      SELECT id FROM users WHERE email = ${email} AND id != ${id} LIMIT 1
-    `;
+    if (isNaN(id)) {
+      return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
+    }
 
-    if (existingUsers.length > 0) {
+    // Validasi email jika ada
+    if (data.email) {
+      const existing = await sql`
+        SELECT id FROM users WHERE email = ${data.email} AND id != ${id} LIMIT 1
+      `;
+      if (existing.length > 0) {
+        return NextResponse.json(
+          { error: "Email already registered by another user" },
+          { status: 409 }
+        );
+      }
+    }
+
+    // Persiapkan kolom yang akan diupdate
+    const fields: string[] = [];
+    const values: any[] = [];
+
+    if (data.name) {
+      fields.push(`name = $${fields.length + 1}`);
+      values.push(data.name);
+    }
+
+    if (data.email) {
+      fields.push(`email = $${fields.length + 1}`);
+      values.push(data.email);
+    }
+
+    if (data.company) {
+      fields.push(`company = $${fields.length + 1}`);
+      values.push(data.company);
+    }
+
+    if (data.role) {
+      fields.push(`role_id = $${fields.length + 1}`);
+      values.push(data.role);
+    }
+
+    if (data.department) {
+      fields.push(`department_id = $${fields.length + 1}`);
+      values.push(data.department);
+    }
+
+    if (data.password) {
+      const hashedPassword = await bcrypt.hash(data.password, 10);
+      fields.push(`password = $${fields.length + 1}`);
+      values.push(hashedPassword);
+    }
+
+    fields.push(`updated_at = now()`);
+
+    if (fields.length === 0) {
       return NextResponse.json(
-        { error: "Email already registered by another user" },
-        { status: 409 }
+        { error: "No valid fields provided to update" },
+        { status: 400 }
       );
     }
 
-    // Encrypt password hanya kalau password ada dan bukan kosong (opsional)
-    const hashedPassword = password ? await bcrypt.hash(password, 10) : null;
+    const query = `UPDATE users SET ${fields.join(", ")} WHERE id = $${
+      values.length + 1
+    }`;
 
-    // Build update query dengan password opsional
-    if (hashedPassword) {
-      await sql`
-        UPDATE users
-        SET name = ${name},
-            email = ${email},
-            company = ${company},
-            password = ${hashedPassword},
-            role_id = ${role},
-            department_id = ${department},
-            updated_at = now()
-        WHERE id = ${id}
-      `;
-    } else {
-      await sql`
-        UPDATE users
-        SET name = ${name},
-            email = ${email},
-            company = ${company},
-            role_id = ${role},
-            department_id = ${department},
-            updated_at = now()
-        WHERE id = ${id}
-      `;
-    }
+    await sql.unsafe(query, [...values, id]);
 
-    return NextResponse.json({ message: "User updated" });
+    return NextResponse.json({ message: "User updated successfully" });
   } catch (err) {
     console.error("🔥 ERROR PUT /api/users/[id]:", err);
     return NextResponse.json(

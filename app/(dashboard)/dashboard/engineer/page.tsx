@@ -1,6 +1,5 @@
 "use client"
 
-import { SectionCards } from "@/components/section-cards"
 import { Badge } from "@/components/ui/badge"
 import {
   Card,
@@ -9,19 +8,27 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Button } from "@/components/ui/button"
-import { IconAlertTriangle, IconClock, IconPlus, IconSearch, IconTicket, IconTrendingUp, IconUser } from "@tabler/icons-react"
+import { IconAlertTriangle, IconBuildings, IconClock, IconEdit, IconPlus, IconSearch, IconTicket, IconTrash, IconTrendingUp, IconUser } from "@tabler/icons-react"
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
-import { useRouter } from "next/navigation"
-import DialogCreate from "./(action)/create"
-import { useFetchTickets } from "@/hooks/useFetchTickets"
 import { useFetchUsers } from "@/hooks/useFetchUsers"
 import { useAuth } from "@/hooks/useAuth"
+import DialogUserForm from "@/components/user/user-form"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { toast } from "sonner"
 
 export default function Page() {
-  const router = useRouter();
 
   const { users, mutate: mutateUsers } = useFetchUsers(null, 2)
 
@@ -48,6 +55,25 @@ export default function Page() {
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesRole && matchesSearch;
   });
+
+  const handleDelete = async (userId: number) => {
+    try {
+      const res = await fetch(`/api/users/${userId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        toast.success("User deleted successfully");
+        mutateUsers();
+      } else {
+        const err = await res.json();
+        toast.error("Failed to delete data: " + err.message || "Unknown error");
+      }
+    } catch (error) {
+      console.error("🔥 Delete error:", error);
+      toast.error("Server error while deleting data");
+    }
+  };
 
   return (
     <div className="flex flex-1 flex-col">
@@ -81,7 +107,7 @@ export default function Page() {
                         />
                       </div>
                     </div>
-                    {isAdmin && <DialogCreate mutateUsers={mutateUsers} />}
+                    {isAdmin && <DialogUserForm mutateUsers={mutateUsers} roleId={2} />}
                   </div>
                 </CardContent>
               </Card>
@@ -111,12 +137,39 @@ export default function Page() {
                               <span>{user.department}</span>
                             </div> */}
                             <div className="flex items-center gap-1">
+                              <IconBuildings className="h-4 w-4" />
+                              <span>{user?.company ?? "Tokopedia"}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
                               <span>Joined: {new Date(user.created_at).toLocaleDateString()}</span>
                             </div>
                           </div>
                         </div>
 
-                        {user.role?.name.toLowerCase() === 'engineer' && (
+
+                        <div className="flex gap-2">
+                          {isAdmin && <DialogUserForm mutateUsers={mutateUsers} roleId={2} mode="edit" initialData={user} />}
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button variant="outline"><IconTrash className="h-4 w-4" /> Delete</Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete your
+                                  data and remove your data from our servers.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(user?.id)}>Delete</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+
+                        {/* {user.role?.name.toLowerCase() === 'engineer' && (
                           <div className="flex gap-6 text-center">
                             <div className="bg-blue-50 p-3 rounded-lg border border-blue-200">
                               <div className="flex items-center gap-2 text-blue-600 mb-1">
@@ -137,7 +190,7 @@ export default function Page() {
                               <div className="text-xs text-green-600">Rating</div>
                             </div>
                           </div>
-                        )}
+                        )} */}
                       </div>
                     </CardContent>
                   </Card>

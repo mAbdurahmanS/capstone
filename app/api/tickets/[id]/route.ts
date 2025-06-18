@@ -12,6 +12,7 @@ export async function GET(
     const rows = await sql`
             SELECT 
               t.id,t.title, t.description, t.created_at, t.updated_at, t.assigned_at, t.resolved_at,
+              i.image AS image,
               p.id AS priority_id, p.name AS priority_name,
               s.id AS status_id, s.name AS status_name,
               c.id AS customer_id, c.name AS customer_name, c.email AS customer_email,
@@ -21,6 +22,7 @@ export async function GET(
             LEFT JOIN status s ON t.status_id = s.id
             LEFT JOIN users c ON t.customer_id = c.id
             LEFT JOIN users e ON t.engineer_id = e.id
+            LEFT JOIN images i ON t.id = i.ticket_id
             WHERE t.id = ${id} LIMIT 1
           `;
 
@@ -35,6 +37,7 @@ export async function GET(
       id: rows[0].id,
       title: rows[0].title,
       description: decrypt(rows[0].description),
+      image: rows[0].image,
       priority: {
         id: rows[0].priority_id,
         name: rows[0].priority_name,

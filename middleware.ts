@@ -5,17 +5,8 @@ export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("token")?.value;
 
-  // skip static & api dll
-  if (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/api") ||
-    pathname.startsWith("/static") ||
-    pathname === "/favicon.ico"
-  ) {
-    return NextResponse.next();
-  }
-
   const isLoginPage = pathname === "/login";
+  const isRegisterPage = pathname === "/login";
 
   if (!token && !isLoginPage) {
     return NextResponse.redirect(new URL("/login", request.url));
@@ -23,8 +14,23 @@ export async function middleware(request: NextRequest) {
 
   if (token) {
     try {
-      await verifyToken(token);
+      const user = await verifyToken(token); // { id: number, ... }
+
+      // Jika sudah login dan coba ke /login, redirect ke dashboard
       if (isLoginPage) {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
+
+      // 🔒 Rule: user ID 3 hanya bisa ke /ticket
+      if (user.role.id === 3 && !pathname.startsWith("/ticket")) {
+        return NextResponse.redirect(new URL("/ticket", request.url));
+      }
+
+      // 🔒 Rule: user ID 1 dan 2 hanya bisa ke /dashboard
+      if (
+        (user.role.id === 1 || user.role.id === 2) &&
+        pathname.startsWith("/ticket")
+      ) {
         return NextResponse.redirect(new URL("/dashboard", request.url));
       }
     } catch (err) {
@@ -37,3 +43,7 @@ export async function middleware(request: NextRequest) {
 
   return NextResponse.next();
 }
+
+export const config = {
+  matcher: ["/ticket", "/dashboard/:path*", "/login"],
+};

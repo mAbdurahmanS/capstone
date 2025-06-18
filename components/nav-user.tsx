@@ -30,19 +30,28 @@ import {
 } from "@/components/ui/sidebar"
 import { useRouter } from "next/navigation"
 import DialogEditUser from "./user/user-edit"
-import { useFetchUsers } from "@/hooks/useFetchUsers"
+import { useState } from "react"
 
 export function NavUser({
-  user,
+  user, mutate
 }: {
   user: {
+    id: number
+    company: string
     name: string
     email: string
+    role: {
+      id: number
+      name: string
+    }
     avatar: string
   }
+  mutate: any
 }) {
   const { isMobile } = useSidebar()
   const router = useRouter()
+
+  const [openEdit, setOpenEdit] = useState(false);
 
   const handleLogout = async () => {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -53,6 +62,9 @@ export function NavUser({
   return (
     <SidebarMenu>
       <SidebarMenuItem>
+
+        <DialogEditUser open={openEdit} setOpen={setOpenEdit} user={user} mutate={mutate} />
+
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
@@ -94,8 +106,9 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <DialogEditUser />
+              <DropdownMenuItem onClick={() => setOpenEdit(true)}>
+                <IconUserCircle />
+                Edit Account
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

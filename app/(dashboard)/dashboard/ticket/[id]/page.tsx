@@ -1,6 +1,6 @@
 "use client";
 
-import React, { use, useState } from 'react';
+import React, { use, useEffect, useRef, useState } from 'react';
 import { Send, User, Clock, AlertTriangle, Shield, MessageSquare } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,8 +15,15 @@ import { useFetchPriorities } from '@/hooks/useFetchPriorities';
 import { useFetchUsers } from '@/hooks/useFetchUsers';
 import { useFetchProgressLogs } from '@/hooks/useFetchProgressLogs';
 import { useAuth } from '@/hooks/useAuth';
+import Image from 'next/image';
+import { Input } from '@/components/ui/input';
 
 export default function Page({ params }: { params: Promise<{ id: number }> }) {
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
   const router = useRouter();
   const { id } = use(params);
 
@@ -27,6 +34,8 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
   const { users } = useFetchUsers(null, 2)
   const { isAdmin } = useAuth()
 
+  const [isSending, setIsSending] = useState(false);
+  const [images, setImages] = useState<File[]>([]);
   const [newMessage, setNewMessage] = useState('');
 
   const updateTicket = async (field: string, value: string) => {
@@ -48,7 +57,24 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return; // mencegah kirim pesan kosong
 
+    setIsSending(true);
+
     try {
+      // 1. Upload images ke /api/upload
+      let imageUrls: string[] = [];
+      if (images.length > 0) {
+        const imageForm = new FormData();
+        images.forEach((img) => imageForm.append("images", img));
+        const imgRes = await fetch("/api/upload", {
+          method: "POST",
+          body: imageForm,
+        });
+
+        if (!imgRes.ok) throw new Error("Image upload failed");
+        const imgData = await imgRes.json();
+        imageUrls = imgData.urls;
+      }
+
       const res = await fetch("/api/progress-logs", {
         method: "POST",
         headers: {
@@ -58,6 +84,7 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
           note: newMessage,
           ticket_id: id,  // pastikan ini ada
           user_id: ticket?.engineer?.id,       // pastikan ini ada
+          images: imageUrls
         }),
       });
 
@@ -70,18 +97,17 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
       console.log("Berhasil kirim:", data);
       setNewMessage(""); // reset textarea
       mutateProgressLogs()
-      // 🔁 opsional: panggil mutate / refetch untuk refresh log terbaru
+      setImages([]);
     } catch (error) {
       console.error("Error mengirim pesan:", error);
+    } finally {
+      setIsSending(false);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
+  useEffect(() => {
+    scrollToBottom();
+  }, [progressLogs]);
 
   return (
     <div className="flex flex-1 flex-col">
@@ -206,7 +232,7 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
                     <div
                       className={`flex justify-start animate-fade-in`}
                     >
-                      <div className={`max-w-[85%] order-2`}>
+                      <div className={`max-w-[85%] order-1`}>
                         <div
                           className={`p-5 rounded-3xl shadow-lg backdrop-blur-sm transition-all duration-200 hover:shadow-xl bg-white border border-gray-100 text-gray-900 rounded-tl-lg ml-4`}
                         >
@@ -217,6 +243,19 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
                             <span className="text-sm font-semibold">
                               {ticket?.customer?.name}
                             </span>
+                          </div>
+                          {/* Images */}
+                          <div className="w-[100%] mb-2">
+                            {ticket?.image && (
+                              <Image
+                                src={ticket.image}
+                                alt={ticket.title}
+                                layout="responsive"
+                                width={16}
+                                height={9}
+                                className="rounded-lg object-contain border"
+                              />
+                            )}
                           </div>
                           <p className="text-sm leading-relaxed mb-3">{ticket?.description}</p>
                           <div className={`flex items-center gap-1 text-xs text-gray-500`}>
@@ -229,6 +268,7 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
                         </div>
                       </div>
                     </div>
+
                     {progressLogs.map((message) => (
                       <div
                         key={message.id}
@@ -253,6 +293,18 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
                                 {message.user?.role === 'User' ? message?.user?.name : `${message?.user?.name} (Engineer)`}
                               </span>
                             </div>
+                            <div className="w-[100%] mb-2">
+                              {message?.image && (
+                                <Image
+                                  src={message.image}
+                                  alt={message.id}
+                                  layout="responsive"
+                                  width={16}
+                                  height={9}
+                                  className="rounded-lg object-contain border"
+                                />
+                              )}
+                            </div>
                             <p className="text-sm leading-relaxed mb-3">{message.note}</p>
                             <div className={`flex items-center gap-1 text-xs ${message.user?.role === 'User' ? 'text-gray-500' : 'text-white/80'}`}>
                               <Clock className="h-3 w-3" />
@@ -265,26 +317,52 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
                         </div>
                       </div>
                     ))}
+
+                    <div ref={messagesEndRef} />
                   </div>
 
                   {/* Message Input */}
                   <div className="border-t bg-gradient-to-r from-gray-50 to-white p-6">
+                    <Input
+                      id="images"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => {
+                        if (e.target.files) {
+                          setImages(Array.from(e.target.files));
+                        }
+                      }}
+                      className='mb-2'
+                    />
                     <div className="flex gap-4 items-end">
                       <Textarea
                         placeholder="Ketik balasan Anda..."
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
-                        onKeyPress={handleKeyPress}
+                        required
                         className="flex-1 min-h-[60px] max-h-[120px] resize-none border-0 bg-white shadow-lg rounded-2xl p-4 focus:ring-2 focus:ring-blue-500/20 transition-all duration-200"
                       />
                       <Button
                         onClick={handleSendMessage}
+                        disabled={isSending}
                         className="bg-gradient-to-r from-blue-500 via-purple-500 to-indigo-500 hover:from-blue-600 hover:via-purple-600 hover:to-indigo-600  rounded-full transition-all duration-200 text-white font-semibold"
                       >
-                        <Send className="h-5 w-5" />
+                        {isSending ? (
+                          <div className="flex items-center gap-2">
+                            <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                            </svg>
+                            Sending...
+                          </div>
+                        ) : (
+                          <Send className="h-5 w-5" />
+                        )}
                       </Button>
                     </div>
                   </div>
+
                 </CardContent>
               </Card>
             </div>

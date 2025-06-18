@@ -23,11 +23,13 @@ export async function GET(
         p.user_id,
         p.created_at,
         u.name AS user,
+        i.image AS image,
         r.name AS role
       FROM progress_logs p
       LEFT JOIN tickets t ON p.ticket_id = t.id
       LEFT JOIN users u ON p.user_id = u.id
       LEFT JOIN roles r ON u.role_id = r.id
+      LEFT JOIN images i ON p.id = i.progress_log_id
       WHERE p.ticket_id = ${ticket_id}
       ORDER BY p.created_at ASC
     `;
@@ -40,6 +42,7 @@ export async function GET(
       return {
         id: row.id,
         note: decrypt(row.note),
+        image: row.image,
         ticket_id: {
           id: row.ticket_id,
           // title: row.title,

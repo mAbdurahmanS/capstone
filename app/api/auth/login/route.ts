@@ -15,8 +15,8 @@ export async function POST(req: Request) {
   }
 
   const row = await sql`
-    SELECT u.id, u.name, u.email, u.password, u.role_id, r.name AS role
-    FROM users u
+    SELECT u.id, u.name, u.email, u.password, u.role_id, u.company,
+    r.name AS role FROM users u
     LEFT JOIN roles r ON u.role_id = r.id
     WHERE u.email = ${email}
     LIMIT 1
@@ -35,6 +35,7 @@ export async function POST(req: Request) {
     id: row[0].id,
     name: row[0].name,
     email: row[0].email,
+    company: row[0].company,
     role: {
       id: row[0].role_id,
       name: row[0].role,

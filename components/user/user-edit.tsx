@@ -1,33 +1,67 @@
+"use client"
+
 import { Button } from "@/components/ui/button"
 import {
     Dialog,
     DialogClose,
     DialogContent,
-    DialogDescription,
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { IconPlus, IconUserCircle } from "@tabler/icons-react"
-import { useRef, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { toast } from "sonner"
 
-export default function DialogEditUser() {
-
-    const closeRef = useRef<HTMLButtonElement>(null);
+export default function DialogEditUser({
+    open,
+    setOpen,
+    user,
+    mutate,
+}: {
+    open: boolean
+    setOpen: (val: boolean) => void
+    user: {
+        id: number
+        company: string
+        name: string
+        email: string
+        role: {
+            id: number
+            name: string
+        }
+    }
+    mutate: any
+}) {
+    const closeRef = useRef<HTMLButtonElement>(null)
 
     const [formData, setFormData] = useState({
         company: "",
         name: "",
-        email: "",
         password: "",
-        role: 2
     })
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const [initialData, setInitialData] = useState({
+        company: "",
+        name: "",
+    })
+
+    useEffect(() => {
+        setFormData({
+            company: user.company || "",
+            name: user.name || "",
+            password: "",
+        })
+        setInitialData({
+            company: user.company || "",
+            name: user.name || "",
+        })
+    }, [user, open])
+
+    const handleChange = (
+        e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    ) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value,
@@ -37,46 +71,50 @@ export default function DialogEditUser() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
 
+        // Kirim hanya field yang diubah
+        const updatedFields: Record<string, string> = {}
+        if (formData.name !== initialData.name) updatedFields.name = formData.name
+        if (formData.company !== initialData.company)
+            updatedFields.company = formData.company
+        if (formData.password.trim()) updatedFields.password = formData.password
+
+        if (Object.keys(updatedFields).length === 0) {
+            toast.info("Tidak ada perubahan yang dilakukan")
+            return
+        }
+
         try {
-            const res = await fetch("/api/users", {
-                method: "POST",
+            const res = await fetch(`/api/users/${user?.id}`, {
+                method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
+                body: JSON.stringify(updatedFields),
             })
 
             if (res.ok) {
-                toast.success("Admin created successfully")
-                closeRef.current?.click();
+                toast.success("User updated successfully")
+                closeRef.current?.click()
                 setFormData({
                     company: "",
                     name: "",
-                    email: "",
                     password: "",
-                    role: 1
                 })
-                // mutateUsers()
+                mutate()
             } else {
                 const err = await res.json()
-                toast.error("Error: " + err.message || "Failed to create admin")
+                toast.error("Error: " + (err.message || "Failed to update user"))
             }
         } catch (err) {
-            console.error("🔥 Error creating admin:", err)
+            console.error("🔥 Error updating user:", err)
             toast.error("Server error")
         }
     }
 
     return (
-        <Dialog>
-            <DialogTrigger asChild>
-                <div className="flex items-center gap-2">
-                    <IconUserCircle />
-                    Edit Account
-                </div>
-            </DialogTrigger>
+        <Dialog open={open} onOpenChange={setOpen}>
             <DialogContent className="sm:max-w-[425px]">
                 <form onSubmit={handleSubmit}>
                     <DialogHeader>
-                        <DialogTitle>Add New Admin</DialogTitle>
+                        <DialogTitle>Edit User</DialogTitle>
                     </DialogHeader>
                     <div className="grid gap-4 py-6">
                         <div className="grid gap-3">
@@ -86,7 +124,6 @@ export default function DialogEditUser() {
                                 name="company"
                                 value={formData.company}
                                 onChange={handleChange}
-                                required
                             />
                         </div>
                         <div className="grid gap-3">
@@ -96,37 +133,26 @@ export default function DialogEditUser() {
                                 name="name"
                                 value={formData.name}
                                 onChange={handleChange}
-                                required
                             />
                         </div>
-                        {/* <div className="grid gap-3">
-                            <Label htmlFor="email">Email</Label>
-                            <Input
-                                id="email"
-                                name="email"
-                                type="email"
-                                value={formData.email}
-                                onChange={handleChange}
-                                required
-                            />
-                        </div> */}
                         <div className="grid gap-3">
-                            <Label htmlFor="password">Password</Label>
+                            <Label htmlFor="password">Password (opsional)</Label>
                             <Input
                                 id="password"
                                 name="password"
                                 type="password"
                                 value={formData.password}
                                 onChange={handleChange}
-                                required
                             />
                         </div>
                     </div>
                     <DialogFooter>
                         <DialogClose asChild>
-                            <Button ref={closeRef} variant="outline">Cancel</Button>
+                            <Button ref={closeRef} variant="outline">
+                                Cancel
+                            </Button>
                         </DialogClose>
-                        <Button type="submit">Add Admin</Button>
+                        <Button type="submit">Update</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
