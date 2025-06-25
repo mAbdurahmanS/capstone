@@ -40,6 +40,7 @@ export default function DialogCreate({ mutateTickets }: { mutateTickets: () => v
         category_id: "",
     })
     const [images, setImages] = useState<File[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({
@@ -58,7 +59,7 @@ export default function DialogCreate({ mutateTickets }: { mutateTickets: () => v
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-
+        setIsLoading(true);
         try {
             // 1. Upload images ke /api/upload
             let imageUrls: string[] = [];
@@ -103,6 +104,8 @@ export default function DialogCreate({ mutateTickets }: { mutateTickets: () => v
         } catch (err) {
             console.error("🔥 Error creating ticket:", err);
             toast.error("Server error");
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -128,7 +131,7 @@ export default function DialogCreate({ mutateTickets }: { mutateTickets: () => v
                             <Input
                                 id="images"
                                 type="file"
-                                accept="image/*"
+                                // accept="image/*"
                                 multiple
                                 onChange={(e) => {
                                     if (e.target.files) {
@@ -179,7 +182,9 @@ export default function DialogCreate({ mutateTickets }: { mutateTickets: () => v
                         <DialogClose asChild>
                             <Button ref={closeRef} variant="outline">Cancel</Button>
                         </DialogClose>
-                        <Button type="submit">Create</Button>
+                        <Button type="submit" disabled={isLoading}>
+                            {isLoading ? "Creating..." : "Create"}
+                        </Button>
                     </DialogFooter>
                 </form>
             </DialogContent>

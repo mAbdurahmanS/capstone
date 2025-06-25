@@ -17,6 +17,7 @@ import { useFetchProgressLogs } from '@/hooks/useFetchProgressLogs';
 import { useAuth } from '@/hooks/useAuth';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
+import { isImage } from '@/lib/isImage';
 
 export default function Page({ params }: { params: Promise<{ id: number }> }) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -246,7 +247,7 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
                           </div>
                           {/* Images */}
                           <div className="w-[100%] mb-2">
-                            {ticket?.image && (
+                            {/* {ticket?.image && (
                               <Image
                                 src={ticket.image}
                                 alt={ticket.title}
@@ -255,6 +256,28 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
                                 height={9}
                                 className="rounded-lg object-contain border"
                               />
+                            )} */}
+                            {ticket?.image && (
+                              <>
+                                {isImage(ticket.image) ? (
+                                  <Image
+                                    src={ticket.image}
+                                    alt={ticket.title}
+                                    layout="responsive"
+                                    width={16}
+                                    height={9}
+                                    className="rounded-lg object-contain border"
+                                  />
+                                ) : (
+                                  <a
+                                    href={ticket.image}
+                                    download
+                                    className="inline-block px-4 py-2 mt-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700"
+                                  >
+                                    Download File
+                                  </a>
+                                )}
+                              </>
                             )}
                           </div>
                           <p className="text-sm leading-relaxed mb-3">{ticket?.description}</p>
@@ -294,7 +317,7 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
                               </span>
                             </div>
                             <div className="w-[100%] mb-2">
-                              {message?.image && (
+                              {/* {message?.image && (
                                 <Image
                                   src={message.image}
                                   alt={message.id}
@@ -303,6 +326,28 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
                                   height={9}
                                   className="rounded-lg object-contain border"
                                 />
+                              )} */}
+                              {message?.image && (
+                                <>
+                                  {isImage(message.image) ? (
+                                    <Image
+                                      src={message.image}
+                                      alt={message.id}
+                                      layout="responsive"
+                                      width={16}
+                                      height={9}
+                                      className="rounded-lg object-contain border"
+                                    />
+                                  ) : (
+                                    <a
+                                      href={message.image}
+                                      download
+                                      className="inline-block px-4 py-2 mt-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700"
+                                    >
+                                      Download File
+                                    </a>
+                                  )}
+                                </>
                               )}
                             </div>
                             <p className="text-sm leading-relaxed mb-3">{message.note}</p>

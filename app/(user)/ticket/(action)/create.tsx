@@ -37,6 +37,10 @@ export default function DialogCreate({ mutateTickets, userId }: { mutateTickets:
         category_id: "",
     })
 
+    const [images, setImages] = useState<File[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+
+
     const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({
             ...formData,
@@ -53,12 +57,31 @@ export default function DialogCreate({ mutateTickets, userId }: { mutateTickets:
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
-
+        setIsLoading(true);
         try {
+            // 1. Upload images ke /api/upload
+            let imageUrls: string[] = [];
+            if (images.length > 0) {
+                const imageForm = new FormData();
+                images.forEach((img) => imageForm.append("images", img));
+                const imgRes = await fetch("/api/upload", {
+                    method: "POST",
+                    body: imageForm,
+                });
+
+                if (!imgRes.ok) throw new Error("Image upload failed");
+                const imgData = await imgRes.json();
+                imageUrls = imgData.urls;
+            }
+
+            // 2. Submit ticket
             const res = await fetch("/api/tickets", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(formData),
+                body: JSON.stringify({
+                    ...formData,
+                    images: imageUrls, // array of URL string
+                }),
             })
 
             if (res.ok) {
@@ -70,6 +93,7 @@ export default function DialogCreate({ mutateTickets, userId }: { mutateTickets:
                     customer_id: userId,
                     category_id: "",
                 })
+                setImages([]);
                 mutateTickets()
             } else {
                 const err = await res.json()
@@ -78,6 +102,9 @@ export default function DialogCreate({ mutateTickets, userId }: { mutateTickets:
         } catch (err) {
             console.error("🔥 Error creating ticket:", err)
             toast.error("Server error")
+        }
+        finally {
+            setIsLoading(false);
         }
     }
 
@@ -108,6 +135,20 @@ export default function DialogCreate({ mutateTickets, userId }: { mutateTickets:
                         </DialogDescription>
                     </DialogHeader>
                     <div className="grid gap-4 py-6">
+                        <div className="grid gap-3">
+                            <Label htmlFor="images">Upload Images</Label>
+                            <Input
+                                id="images"
+                                type="file"
+                                // accept="image/*"
+                                multiple
+                                onChange={(e) => {
+                                    if (e.target.files) {
+                                        setImages(Array.from(e.target.files));
+                                    }
+                                }}
+                            />
+                        </div>
                         <div className="grid gap-3">
                             <Label htmlFor="category">Category</Label>
                             <Select value={formData.category_id} onValueChange={handleCategoryChange}>
@@ -150,7 +191,9 @@ export default function DialogCreate({ mutateTickets, userId }: { mutateTickets:
                         <DialogClose asChild>
                             <Button ref={closeRef} variant="outline">Cancel</Button>
                         </DialogClose>
-                        <Button type="submit">Save changes</Button>
+                        <Button type="submit" disabled={isLoading}>
+                            {isLoading ? "Creating..." : "Create"}
+                        </Button>
                     </DialogFooter>
                 </form>
             </DialogContent>

@@ -9,6 +9,7 @@ import { useFetchProgressLogs } from '@/hooks/useFetchProgressLogs';
 import { useFetchTickets } from '@/hooks/useFetchTickets';
 import { Input } from '../ui/input';
 import Image from 'next/image';
+import { isImage } from '@/lib/isImage';
 
 interface TicketDetailProps {
     ticketId: number;
@@ -179,16 +180,28 @@ export default function TicketDetail({ ticketId, onBack, isUserView = false }: T
                                             </span>
                                         </div>
                                         {/* Images */}
-                                        <div className="w-[100%] mb-2">
+                                        <div className="w-full mb-2">
                                             {ticket?.image && (
-                                                <Image
-                                                    src={ticket.image}
-                                                    alt={ticket.title}
-                                                    layout="responsive"
-                                                    width={16}
-                                                    height={9}
-                                                    className="rounded-lg object-contain border"
-                                                />
+                                                <>
+                                                    {isImage(ticket.image) ? (
+                                                        <Image
+                                                            src={ticket.image}
+                                                            alt={ticket.title}
+                                                            layout="responsive"
+                                                            width={16}
+                                                            height={9}
+                                                            className="rounded-lg object-contain border"
+                                                        />
+                                                    ) : (
+                                                        <a
+                                                            href={ticket.image}
+                                                            download
+                                                            className="inline-block px-4 py-2 mt-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700"
+                                                        >
+                                                            Download File
+                                                        </a>
+                                                    )}
+                                                </>
                                             )}
                                         </div>
                                         <p className="text-sm leading-relaxed mb-3">{ticket?.description}</p>
@@ -227,7 +240,7 @@ export default function TicketDetail({ ticketId, onBack, isUserView = false }: T
                                                 </span>
                                             </div>
                                             <div className="w-[100%] mb-2">
-                                                {message?.image && (
+                                                {/* {message?.image && (
                                                     <Image
                                                         src={message.image}
                                                         alt={message.id}
@@ -236,6 +249,28 @@ export default function TicketDetail({ ticketId, onBack, isUserView = false }: T
                                                         height={9}
                                                         className="rounded-lg object-contain border"
                                                     />
+                                                )} */}
+                                                {message?.image && (
+                                                    <>
+                                                        {isImage(message.image) ? (
+                                                            <Image
+                                                                src={message.image}
+                                                                alt={message.id}
+                                                                layout="responsive"
+                                                                width={16}
+                                                                height={9}
+                                                                className="rounded-lg object-contain border"
+                                                            />
+                                                        ) : (
+                                                            <a
+                                                                href={message.image}
+                                                                download
+                                                                className="inline-block px-4 py-2 mt-2 text-sm font-medium text-white bg-blue-600 rounded hover:bg-blue-700"
+                                                            >
+                                                                Download File
+                                                            </a>
+                                                        )}
+                                                    </>
                                                 )}
                                             </div>
                                             <p className="text-sm leading-relaxed mb-3">{message.note}</p>
@@ -259,7 +294,7 @@ export default function TicketDetail({ ticketId, onBack, isUserView = false }: T
                             <Input
                                 id="images"
                                 type="file"
-                                accept="image/*"
+                                // accept="image/*"
                                 multiple
                                 onChange={(e) => {
                                     if (e.target.files) {
