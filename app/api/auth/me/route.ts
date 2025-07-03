@@ -14,6 +14,9 @@ export async function GET() {
     const user = await verifyToken(token);
     return NextResponse.json({ user });
   } catch (err) {
-    return NextResponse.json({ error: "Invalid token" }, { status: 401 });
+    return NextResponse.json(
+      { error: `Invalid token ${err}` },
+      { status: 401 }
+    );
   }
 }

@@ -52,11 +52,11 @@ export async function GET(
 // 🔄 Update user
 export async function PUT(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: number }> }
 ) {
   try {
     const data = await req.json();
-    const id = Number(params.id); // pastikan ID angka
+    const { id } = await params; // pastikan ID angka
 
     if (isNaN(id)) {
       return NextResponse.json({ error: "Invalid user ID" }, { status: 400 });
@@ -77,6 +77,7 @@ export async function PUT(
 
     // Persiapkan kolom yang akan diupdate
     const fields: string[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const values: any[] = [];
 
     if (data.name) {

@@ -157,6 +157,7 @@ export default function DialogCreate({ mutateTickets, userId }: { mutateTickets:
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectGroup>
+                                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                         {categories.map((cat: any) => (
                                             <SelectItem key={cat.id} value={String(cat.id)}>
                                                 {cat.name}

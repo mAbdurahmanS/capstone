@@ -1,10 +1,8 @@
 "use client"
 
 import {
-  IconCreditCard,
   IconDotsVertical,
   IconLogout,
-  IconNotification,
   IconUserCircle,
 } from "@tabler/icons-react"
 
@@ -46,6 +44,7 @@ export function NavUser({
     }
     avatar: string
   }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   mutate: any
 }) {
   const { isMobile } = useSidebar()

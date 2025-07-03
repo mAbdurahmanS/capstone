@@ -40,7 +40,8 @@ export default function Page() {
       : 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
-  const filteredUsers = users.filter(user => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const filteredUsers = users.filter((user: any) => {
     // const matchesRole = filterRole === 'all' || user.role === filterRole;
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -105,7 +106,8 @@ export default function Page() {
               </Card>
 
               <div className="space-y-4">
-                {filteredUsers.map((user) => (
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {filteredUsers.map((user: any) => (
                   <Card key={user.id} className="hover:shadow-lg transition-shadow duration-200 !py-0">
                     <CardContent className="p-6">
                       <div className="flex items-center gap-4">

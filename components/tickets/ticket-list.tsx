@@ -4,7 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Clock, MessageCircle, Search, AlertCircle } from 'lucide-react';
+import { MessageCircle } from 'lucide-react';
 import { IconClock, IconMessageCircle, IconSearch, IconUser } from '@tabler/icons-react';
 import DialogCreate from '@/app/(user)/ticket/(action)/create';
 import { useFetchTickets } from '@/hooks/useFetchTickets';
@@ -41,8 +41,8 @@ export default function TicketList({ onReplyClick }: UserTicketListProps) {
             default: return 'bg-gray-100 text-gray-800 border-gray-200';
         }
     };
-
-    const filteredTickets = tickets.filter(ticket => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const filteredTickets = tickets.filter((ticket: any) => {
         if (isUser && ticket.customer?.id !== user.id) {
             return false;
         }
@@ -164,7 +164,8 @@ export default function TicketList({ onReplyClick }: UserTicketListProps) {
 
             {/* Ticket List */}
             <div className="space-y-4">
-                {filteredTickets.map((ticket) => (
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {filteredTickets.map((ticket: any) => (
                     <Card key={ticket.id} className="hover:shadow-md transition-shadow duration-200">
                         <CardContent className="p-6">
                             <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">

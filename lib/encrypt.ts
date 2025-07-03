@@ -1,6 +1,9 @@
 import crypto from "crypto";
 
-const ENCRYPTION_KEY = Buffer.from(process.env.AES_SECRET_KEY!, "base64"); // 32 bytes from Base64
+const ENCRYPTION_KEY = Buffer.from(
+  process.env.AES_SECRET_KEY! || "aySnXebeWrZhVI9B9sODe/XdMyQ/+EfD27z235U3I/4=",
+  "base64"
+); // 32 bytes from Base64
 const IV_LENGTH = 16; // 16 bytes for AES-256-CBC
 
 export function encrypt(text: string): string {

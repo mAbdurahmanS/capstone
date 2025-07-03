@@ -3,11 +3,8 @@
 import * as React from "react"
 import {
   IconDashboard,
-  IconInnerShadowTop,
   IconTicket,
   IconUser,
-  IconCategory,
-  IconBuilding,
   IconUsersGroup,
   IconChartBarPopular,
   IconUserShield,

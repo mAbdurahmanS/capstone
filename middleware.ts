@@ -1,12 +1,22 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyToken } from "./utils/jwt";
 
+type User = {
+  id: number;
+  name: string;
+  email: string;
+  role: {
+    id: number;
+    name: string;
+  };
+};
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("token")?.value;
 
   const isLoginPage = pathname === "/";
-  const isRegisterPage = pathname === "/";
+  // const isRegisterPage = pathname === "/";
 
   if (!token && !isLoginPage) {
     return NextResponse.redirect(new URL("/", request.url));
@@ -14,7 +24,7 @@ export async function middleware(request: NextRequest) {
 
   if (token) {
     try {
-      const user = await verifyToken(token); // { id: number, ... }
+      const user = (await verifyToken(token)) as User; // { id: number, ... }
 
       // Jika sudah login dan coba ke /, redirect ke dashboard
       if (isLoginPage) {

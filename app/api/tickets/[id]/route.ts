@@ -96,7 +96,7 @@ export async function PUT(
       "engineer_id",
       "status_id",
     ];
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const fieldsToUpdate: Record<string, any> = {};
 
     // Enkripsi description jika ada

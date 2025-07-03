@@ -8,7 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 
-import { IconBuildings, IconEdit, IconSearch, IconTrash, IconUser } from "@tabler/icons-react"
+import { IconBuildings, IconSearch, IconTrash, IconUser } from "@tabler/icons-react"
 import { Input } from "@/components/ui/input"
 import { useState } from "react"
 import { useFetchUsers } from "@/hooks/useFetchUsers"
@@ -33,7 +33,7 @@ export default function Page() {
   const { users, mutate: mutateUsers } = useFetchUsers(null, 1)
 
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterRole, setFilterRole] = useState('all');
+  const [filterRole] = useState('all');
   const { isAdmin } = useAuth()
 
 
@@ -43,7 +43,8 @@ export default function Page() {
       : 'bg-gray-100 text-gray-800 border-gray-200';
   };
 
-  const filteredUsers = users.filter(user => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const filteredUsers = users.filter((user: any) => {
     const matchesRole = filterRole === 'all' || user.role === filterRole;
     const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.email.toLowerCase().includes(searchTerm.toLowerCase());
@@ -108,7 +109,8 @@ export default function Page() {
               </Card>
 
               <div className="space-y-4">
-                {filteredUsers.map((user) => (
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                {filteredUsers.map((user: any) => (
                   <Card key={user.id} className="hover:shadow-lg transition-shadow duration-200 !py-0">
                     <CardContent className="p-6">
                       <div className="flex items-center gap-4">

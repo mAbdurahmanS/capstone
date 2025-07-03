@@ -46,8 +46,8 @@ export default function Page() {
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
-
-  const filteredTickets = tickets.filter(ticket => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const filteredTickets = tickets.filter((ticket: any) => {
     if (isEngineer && ticket.engineer?.id !== user.id) {
       return false;
     }
@@ -118,6 +118,7 @@ export default function Page() {
               </Card>
 
               <div className="space-y-4">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 {filteredTickets.map((ticket: any) => (
                   <Card key={ticket.id} className="hover:shadow-lg transition-shadow duration-200">
                     <CardContent className="p-6">

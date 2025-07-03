@@ -44,7 +44,7 @@ export function LoginForm({
 
       setStep("verify")
     } catch (err) {
-      setError("Something went wrong.")
+      setError(`Something went wrong. ${err instanceof Error ? err.message : "Unknown error"}`)
     } finally {
       setLoading(false)
     }
@@ -78,7 +78,7 @@ export function LoginForm({
         window.location.href = "/"
       }
     } catch (err) {
-      setError("Something went wrong.")
+      setError(`Something went wrong. ${err instanceof Error ? err.message : "Unknown error"}`)
     } finally {
       setLoading(false)
     }

@@ -17,7 +17,7 @@ export async function GET() {
         GROUP BY e.id, e.name
         ORDER BY e.name;
       `;
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data = result.map((row: any) => ({
       id: row.id,
       name: row.name,

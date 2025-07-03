@@ -32,6 +32,7 @@ export default function DialogEditUser({
             name: string
         }
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     mutate: any
 }) {
     const closeRef = useRef<HTMLButtonElement>(null)

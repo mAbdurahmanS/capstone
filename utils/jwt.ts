@@ -9,7 +9,7 @@ const JWT_SECRET =
 const encoder = new TextEncoder();
 const secretKey = encoder.encode(JWT_SECRET);
 
-export async function generateToken(payload: object) {
+export async function generateToken(payload: Record<string, unknown>) {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime("7d")

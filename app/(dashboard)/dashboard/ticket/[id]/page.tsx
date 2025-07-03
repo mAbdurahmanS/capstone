@@ -154,7 +154,8 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
                     <SelectValue placeholder="Select Priority" />
                   </SelectTrigger>
                   <SelectContent>
-                    {priorities.map((priority) => (
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    {priorities.map((priority: any) => (
                       <SelectItem key={priority.id} value={priority.id}>
                         {priority.name}
                       </SelectItem>
@@ -179,7 +180,8 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
                     <SelectValue placeholder="Select Status" />
                   </SelectTrigger>
                   <SelectContent>
-                    {statuses.map((status) => (
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    {statuses.map((status: any) => (
                       <SelectItem key={status.id} value={status.id}>
                         {status.name}
                       </SelectItem>
@@ -203,7 +205,8 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
                     <SelectValue placeholder="Select Engineer" />
                   </SelectTrigger>
                   <SelectContent>
-                    {users.map((engineer) => (
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    {users.map((engineer: any) => (
                       <SelectItem key={engineer.id} value={engineer.id}>
                         {engineer.name}
                       </SelectItem>
@@ -291,8 +294,8 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
                         </div>
                       </div>
                     </div>
-
-                    {progressLogs.map((message) => (
+                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                    {progressLogs.map((message: any) => (
                       <div
                         key={message.id}
                         className={`flex ${message.user?.role === 'User' ? 'justify-start' : 'justify-end'} animate-fade-in`}

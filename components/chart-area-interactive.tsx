@@ -52,8 +52,8 @@ export function ChartAreaInteractive() {
   }, [isMobile])
 
   const grouped: Record<string, number> = {}
-
-  ticketData.forEach((t) => {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ticketData.forEach((t: any) => {
     const date = new Date(t.created_at).toISOString().split("T")[0]
     if (!grouped[date]) grouped[date] = 0
     grouped[date]++

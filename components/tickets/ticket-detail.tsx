@@ -17,7 +17,7 @@ interface TicketDetailProps {
     isUserView?: boolean;
 }
 
-export default function TicketDetail({ ticketId, onBack, isUserView = false }: TicketDetailProps) {
+export default function TicketDetail({ ticketId, onBack }: TicketDetailProps) {
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const scrollToBottom = () => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -140,7 +140,8 @@ export default function TicketDetail({ ticketId, onBack, isUserView = false }: T
                     {ticket?.status && ticket?.status?.name && (
                         <Badge className={`${getStatusColor(ticket.status?.name)} px-4 py-2 text-sm font-semibold shadow-lg`}>
                             {/* <Shield className="h-4 w-4 mr-2" /> */}
-                            {ticket.status?.name.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                            {ticket.status?.name.replace('-', ' ').replace(/\b\w/g, (l: any) => l.toUpperCase())}
                         </Badge>
                     )}
                 </div>
@@ -215,7 +216,8 @@ export default function TicketDetail({ ticketId, onBack, isUserView = false }: T
                                     </div>
                                 </div>
                             </div>
-                            {progressLogs.map((message) => (
+                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                            {progressLogs.map((message: any) => (
                                 <div
                                     key={message.id}
                                     className={`flex ${message.user?.role === 'Engineer' ? 'justify-start' : 'justify-end'} animate-fade-in`}
