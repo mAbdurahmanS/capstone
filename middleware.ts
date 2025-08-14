@@ -31,6 +31,19 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(new URL("/dashboard", request.url));
       }
 
+      const adminOnlyPaths = [
+        "/dashboard/admin",
+        "/dashboard/engineer",
+        "/dashboard/user",
+      ];
+      const isAdminOnlyPage = adminOnlyPaths.some((path) =>
+        pathname.startsWith(path)
+      );
+
+      if (isAdminOnlyPage && user.role.id !== 1) {
+        return NextResponse.redirect(new URL("/dashboard", request.url));
+      }
+
       // 🔒 Rule: user ID 3 hanya bisa ke /ticket
       if (user.role.id === 3 && !pathname.startsWith("/ticket")) {
         return NextResponse.redirect(new URL("/ticket", request.url));

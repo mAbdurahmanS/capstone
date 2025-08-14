@@ -374,7 +374,7 @@ export default function Page({ params }: { params: Promise<{ id: number }> }) {
                     <Input
                       id="images"
                       type="file"
-                      accept="image/*"
+                      // accept="image/*"
                       multiple
                       onChange={(e) => {
                         if (e.target.files) {

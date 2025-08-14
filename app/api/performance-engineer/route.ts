@@ -10,7 +10,15 @@ export async function GET() {
           COUNT(t.id) AS assigned,
           COUNT(t.resolved_at) AS resolved,
           ROUND(AVG(EXTRACT(EPOCH FROM (t.resolved_at - t.assigned_at)) / 3600), 1) || 'h' AS avgtime,
-          ROUND(COUNT(t.resolved_at) * 100.0 / NULLIF(COUNT(t.id), 0)) AS efficiency
+          ROUND(
+                SUM(
+                  CASE
+                    WHEN t.resolved_at IS NOT NULL
+                    AND EXTRACT(EPOCH FROM (t.resolved_at - t.assigned_at)) < 14400
+                    THEN 1 ELSE 0
+                  END
+                ) * 100.0 / NULLIF(COUNT(t.id), 0)
+              ) AS efficiency
         FROM users e
         LEFT JOIN tickets t ON t.engineer_id = e.id
         WHERE e.role_id = 2
