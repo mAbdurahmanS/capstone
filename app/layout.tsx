@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CAPSTONE",
+  title: "Komputama Nusantara",
   description: "Management Tikcet System",
 };
 

@@ -100,7 +100,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   <Ticket className="h-6 w-6 text-white" />
                 </div>
                 {/* <IconInnerShadowTop className="!size-5" /> */}
-                <span className="text-base font-semibold">Capstone</span>
+                <span className="text-base font-semibold">Komputama Nusantara</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

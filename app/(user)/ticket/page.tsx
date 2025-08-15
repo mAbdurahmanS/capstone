@@ -86,7 +86,7 @@ export default function Page() {
                             <div className="bg-blue-600 p-2 rounded-lg mr-3">
                                 <Ticket className="h-6 w-6 text-white" />
                             </div>
-                            <h1 className="text-xl font-semibold text-gray-900">Capstone</h1>
+                            <h1 className="text-xl font-semibold text-gray-900">Komputama Nusantara</h1>
                         </div>
                         <div className="flex items-center gap-2">
                             {/* <User className="h-5 w-5 text-gray-400" />
