@@ -1,8 +1,14 @@
 import sql from "@/lib/data";
 import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    const { searchParams } = new URL(req.url);
+
+    const startDate = searchParams.get("start_date"); // format: YYYY-MM-DD
+    const endDate = searchParams.get("end_date"); // format: YYYY-MM-DD
+
     const result = await sql`
         SELECT
           e.id,
@@ -20,11 +26,18 @@ export async function GET() {
                 ) * 100.0 / NULLIF(COUNT(t.id), 0)
               ) AS efficiency
         FROM users e
-        LEFT JOIN tickets t ON t.engineer_id = e.id
+        LEFT JOIN tickets t 
+          ON t.engineer_id = e.id
+          ${
+            startDate && endDate
+              ? sql`AND t.assigned_at BETWEEN ${startDate} AND ${endDate}`
+              : sql``
+          }
         WHERE e.role_id = 2
         GROUP BY e.id, e.name
         ORDER BY e.name;
       `;
+
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const data = result.map((row: any) => ({
       id: row.id,

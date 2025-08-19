@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { PieChart, Pie, Cell } from 'recharts';
 import { Badge } from '@/components/ui/badge';
-import { Download, FileText } from 'lucide-react';
+import { CalendarIcon, Download, FileText } from 'lucide-react';
 import { ChartContainer, ChartTooltip } from '@/components/ui/chart';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -11,11 +11,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import { useFetchPerformanceEngineer } from '@/hooks/useFetchPerformanceEngineer';
+import { DateRange } from "react-day-picker";
+import { format, subDays } from 'date-fns';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { cn } from '@/lib/utils';
+import { Calendar } from '@/components/ui/calendar';
 
 
 export default function Page() {
+    const [date, setDate] = React.useState<DateRange | undefined>({
+        from: subDays(new Date(), 30),
+        to: new Date(),
+    });
+    const { performanceEngineer } = useFetchPerformanceEngineer(date?.from ? date?.from.toISOString().substring(0, 10) : undefined, date?.to ? date?.to.toISOString().substring(0, 10) : undefined)
 
-    const { performanceEngineer } = useFetchPerformanceEngineer()
+    console.log(performanceEngineer);
 
     const [selectedEngineer, setSelectedEngineer] = useState<string>('all');
 
@@ -263,6 +273,42 @@ export default function Page() {
                                     <Download className="h-4 w-4" />
                                     Export PDF
                                 </Button>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            id="date"
+                                            variant={"outline"}
+                                            className={cn(
+                                                " justify-start text-left font-normal",
+                                                !date && "text-muted-foreground"
+                                            )}
+                                        >
+                                            <CalendarIcon />
+                                            {date?.from ? (
+                                                date.to ? (
+                                                    <>
+                                                        {format(date.from, "LLL dd, y")} -{" "}
+                                                        {format(date.to, "LLL dd, y")}
+                                                    </>
+                                                ) : (
+                                                    format(date.from, "LLL dd, y")
+                                                )
+                                            ) : (
+                                                <span>Pick a date</span>
+                                            )}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                            mode="range"
+                                            defaultMonth={date?.from}
+                                            selected={date}
+                                            onSelect={setDate}
+                                            captionLayout="dropdown"
+                                            numberOfMonths={2}
+                                        />
+                                    </PopoverContent>
+                                </Popover>
                                 {/* <Button
                                     onClick={async () => {
                                         const img = await captureEngineerCharts(performanceEngineer[0]?.id);
