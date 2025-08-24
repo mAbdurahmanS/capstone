@@ -25,8 +25,6 @@ export default function Page() {
     });
     const { performanceEngineer } = useFetchPerformanceEngineer(date?.from ? date?.from.toISOString().substring(0, 10) : undefined, date?.to ? date?.to.toISOString().substring(0, 10) : undefined)
 
-    console.log(performanceEngineer);
-
     const [selectedEngineer, setSelectedEngineer] = useState<string>('all');
 
     const getEfficiencyColor = (efficiency: number) => {
@@ -101,6 +99,16 @@ export default function Page() {
         const doc = new jsPDF();
         const currentDate = new Date().toLocaleDateString('id-ID');
 
+        let filterRangeText = "Semua tanggal";
+        if (date?.from && date?.to) {
+            const fromDate = new Date(date.from).toLocaleDateString('id-ID');
+            const toDate = new Date(date.to).toLocaleDateString('id-ID');
+            filterRangeText = `${fromDate} - ${toDate}`;
+        } else if (date?.from && !date?.to) {
+            // kalau hanya pilih 1 hari saja
+            filterRangeText = new Date(date.from).toLocaleDateString('id-ID');
+        }
+
         // Header
         doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
@@ -115,6 +123,7 @@ export default function Page() {
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
             doc.text('Laporan Semua Engineer', 20, 65);
+            doc.text(`Periode Laporan: ${filterRangeText}`, 20, 55);
 
             let yPosition = 85;
 
@@ -183,6 +192,7 @@ export default function Page() {
             doc.setFontSize(14);
             doc.setFont('helvetica', 'bold');
             doc.text(`Laporan Performance - ${engineer.name}`, 20, 65);
+            doc.text(`Periode Laporan: ${filterRangeText}`, 20, 55);
 
             doc.setFontSize(12);
             doc.setFont('helvetica', 'normal');
